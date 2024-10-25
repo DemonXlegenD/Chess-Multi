@@ -17,7 +17,6 @@ public class Client : MonoBehaviour
 
     void Start()
     {
-        //IpV4= GetLocalIPAddress();
         ConnectToServer();
     }
 
@@ -27,19 +26,6 @@ public class Client : MonoBehaviour
         {
             SendMessageToServer(messageToSend);
         }
-    }
-
-    public string GetLocalIPAddress()
-    {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
-        {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
-            {
-                return ip.ToString();
-            }
-        }
-        throw new System.Exception("No network adapters with an IPv4 address in the system!");
     }
 
     void ConnectToServer()

@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,13 +7,13 @@ using UnityEngine;
 
 public class Server : MonoBehaviour
 {
+    [SerializeField] private Chat chat;
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
     TcpListener server;
     TcpClient client;
     NetworkStream stream;
     Thread thread;
-
 
     #region Monobehaviours
     void Start()
@@ -74,6 +73,7 @@ public class Server : MonoBehaviour
                     data = Encoding.UTF8.GetString(buffer, 0, i);
                     Debug.Log("Received: " + data);
 
+
                     string response = "Server response: " + data.ToString();
                     SendMessageToClient(message: response);
                 }
@@ -88,6 +88,11 @@ public class Server : MonoBehaviour
         {
             server.Stop();
         }
+    }
+
+    private void DisplayMessage(string message)
+    {
+        chat.AddMessage(message);
     }
 
     private void OnApplicationQuit()
