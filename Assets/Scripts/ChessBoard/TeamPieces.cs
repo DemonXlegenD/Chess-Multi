@@ -73,7 +73,7 @@ public partial class ChessGameManager
             int i = 0;
             while (i < pieceArray.Length && pieceArray[i].activeSelf) i++;
 
-            pieceArray[i].SetActive(true);
+            pieceArray[i].SetActive(true);  
             pieceArray[i].transform.position = pos;
         }
 
