@@ -9,7 +9,7 @@ public class Client : MonoBehaviour
 {
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;    
-    private string messageToSend = "Hello Server!"; // The message to send.
+    private string messageToSend = "Hello Server!";
 
     private TcpClient client;
     private NetworkStream stream;
@@ -23,7 +23,6 @@ public class Client : MonoBehaviour
 
     void Update()
     {
-        //disable this if you are sending from another script or a button
         if (Input.GetKeyDown(KeyCode.Return))
         {
             SendMessageToServer(messageToSend);
@@ -68,16 +67,14 @@ public class Client : MonoBehaviour
             byte[] bytes = new byte[1024];
             while (true)
             {
-                // Check if there's any data available on the network stream
                 if (stream.DataAvailable)
                 {
                     int length;
-                    // Read incoming stream into byte array.
                     while ((length = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
                         var incomingData = new byte[length];
                         Array.Copy(bytes, 0, incomingData, 0, length);
-                        // Convert byte array to string message.
+
                         string serverMessage = Encoding.UTF8.GetString(incomingData);
                         Debug.Log("Server message received: " + serverMessage);
                     }
