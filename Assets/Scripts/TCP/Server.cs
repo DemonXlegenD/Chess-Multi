@@ -4,38 +4,44 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Server : MonoBehaviour
 {
     [SerializeField] private Chat chat;
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
+    [SerializeField] public Text MSG;
     TcpListener server;
-    TcpClient client;
-    NetworkStream stream;
-    Thread thread;
+    Thread serverThread;
+
+    private Dictionary<int, ClientInfo> clients = new Dictionary<int, ClientInfo>();
+    private int clientCounter = 0;
+    private int messageCount = 0; // Compteur de messages reçus
 
     #region Monobehaviours
     void Start()
     {
         IpV4 = GetLocalIPAddress();
-        thread = new Thread(new ThreadStart(SetupServer));
-        thread.Start();
+        serverThread = new Thread(new ThreadStart(SetupServer));
+        serverThread.Start();
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            SendMessageToClient("Hello");
+            BroadcastMessageToClients("Hello");
         }
+        
+        // Mise à jour de l'affichage du nombre total de messages reçus
+        MSG.text = "Total messages received: " + messageCount;
     }
     #endregion
 
     public string GetLocalIPAddress()
     {
         var host = Dns.GetHostEntry(Dns.GetHostName());
-
         foreach (var ip in host.AddressList)
         {
             if (ip.AddressFamily == AddressFamily.InterNetwork)
@@ -53,31 +59,26 @@ public class Server : MonoBehaviour
             IPAddress localAddr = IPAddress.Parse(IpV4);
             server = new TcpListener(localAddr, serverPort);
             server.Start();
-
-            byte[] buffer = new byte[1024];
-            string data = null;
+            Debug.Log("Server started at " + IpV4 + ":" + serverPort);
 
             while (true)
             {
-                Debug.Log("Waiting for connection...");
-                client = server.AcceptTcpClient();
-                Debug.Log("Connected!");
+                TcpClient client = server.AcceptTcpClient();
 
-                data = null;
-                stream = client.GetStream();
-
-                int i;
-
-                while ((i = stream.Read(buffer, 0, buffer.Length)) != 0)
+                int clientId = clientCounter++;
+                var clientInfo = new ClientInfo
                 {
-                    data = Encoding.UTF8.GetString(buffer, 0, i);
-                    Debug.Log("Received: " + data);
+                    Id = clientId,
+                    TcpClient = client,
+                    Stream = client.GetStream(),
+                    ConnectionTimestamp = System.DateTime.Now.ToString()
+                };
 
+                clients.Add(clientId, clientInfo);
+                BroadcastMessageToClients("Client " + clientId + " connected at " + clientInfo.ConnectionTimestamp);
 
-                    string response = "Server response: " + data.ToString();
-                    SendMessageToClient(message: response);
-                }
-                client.Close();
+                Thread clientThread = new Thread(() => HandleClient(clientInfo));
+                clientThread.Start();
             }
         }
         catch (SocketException e)
@@ -95,18 +96,75 @@ public class Server : MonoBehaviour
         chat.AddMessage(message);
     }
 
-    private void OnApplicationQuit()
+    private void HandleClient(ClientInfo clientInfo)
     {
-        stream.Close();
-        client.Close();
-        server.Stop();
-        thread.Abort();
+        TcpClient client = clientInfo.TcpClient;
+        NetworkStream stream = clientInfo.Stream;
+        byte[] buffer = new byte[1024];
+        string data;
+
+        try
+        {
+            while ((stream.Read(buffer, 0, buffer.Length)) != 0)
+            {
+                data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
+                Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
+
+                // Incrémente le compteur de messages reçus
+                messageCount++;
+
+                string broadcastMessage = "Client " + clientInfo.Id + ": " + data;
+
+                BroadcastMessageToClients(broadcastMessage);
+            }
+        }
+        catch (SocketException e)
+        {
+            Debug.Log("Client " + clientInfo.Id + " disconnected: " + e);
+        }
+        finally
+        {
+            client.Close();
+            clients.Remove(clientInfo.Id);
+            Debug.Log("Client " + clientInfo.Id + " removed from the client list.");
+        }
     }
 
-    public void SendMessageToClient(string message)
+    private void OnApplicationQuit()
     {
-        byte[] msg = Encoding.UTF8.GetBytes(message);
-        stream.Write(msg, 0, msg.Length);
-        Debug.Log("Sent: " + message);
+        foreach (var client in clients.Values)
+        {
+            client.Stream.Close();
+            client.TcpClient.Close();
+        }
+        server.Stop();
+        serverThread.Abort();
     }
+
+    public void SendMessageToClient(int clientId, string message)
+    {
+        if (clients.ContainsKey(clientId))
+        {
+            byte[] msg = Encoding.UTF8.GetBytes(message);
+            clients[clientId].Stream.Write(msg, 0, msg.Length);
+        }
+    }
+
+    public void BroadcastMessageToClients(string message)
+    {
+        Debug.Log("Broadcast message: " + message);
+
+        foreach (var client in clients.Values)
+        {
+            SendMessageToClient(client.Id, message);
+        }
+    }
+}
+
+public class ClientInfo
+{
+    public int Id { get; set; }
+    public TcpClient TcpClient { get; set; }
+    public NetworkStream Stream { get; set; }
+    public string ConnectionTimestamp { get; set; }
 }

@@ -4,11 +4,14 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using System.Collections;
+
 
 public class Client : MonoBehaviour
 {
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;    
+    [SerializeField] public int WaitBeforeStarting = 5;    
     private string messageToSend = "Hello Server!";
 
     private TcpClient client;
@@ -17,12 +20,12 @@ public class Client : MonoBehaviour
 
     void Start()
     {
-        ConnectToServer();
+        Invoke("ConnectToServer", WaitBeforeStarting);
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(KeyCode.A))
         {
             SendMessageToServer(messageToSend);
         }
@@ -34,7 +37,6 @@ public class Client : MonoBehaviour
         {
             client = new TcpClient(IpV4, serverPort);
             stream = client.GetStream();
-            Debug.Log("Connected to server.");
 
             clientReceiveThread = new Thread(new ThreadStart(ListenForData));
             clientReceiveThread.IsBackground = true;
