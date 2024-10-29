@@ -5,13 +5,14 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
+
 
 public class Server : MonoBehaviour
 {
     [SerializeField] private Chat chat;
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
-    [SerializeField] public Text MSG;
     TcpListener server;
     Thread serverThread;
 
@@ -34,8 +35,6 @@ public class Server : MonoBehaviour
             BroadcastMessageToClients("Hello");
         }
         
-        // Mise à jour de l'affichage du nombre total de messages reçus
-        MSG.text = "Total messages received: " + messageCount;
     }
     #endregion
 
