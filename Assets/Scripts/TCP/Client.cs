@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 public class Client : MonoBehaviour
 {
-    [SerializeField] public string IpV4;
+    private string IpServer;
     [SerializeField] public int serverPort = 4269;    
     [SerializeField] public int WaitBeforeStarting = 5;   
     [SerializeField] BlackBoard Data;
@@ -25,10 +25,10 @@ public class Client : MonoBehaviour
     private NetworkStream stream;
     private Thread clientReceiveThread;
 
-    void Start()
+    /*void Start()
     {
         Invoke("ConnectToServer", WaitBeforeStarting);
-    }
+    }*/
 
     void Update()
     {
@@ -51,15 +51,16 @@ public class Client : MonoBehaviour
 
     public void SetClientIP(string ip_) 
     {
-        IpV4 = ip_;
-        Data.SetData(DataKey.SERVER_IP, ip_);
+        IpServer = ip_;
+        Data.SetData(DataKey.SERVER_IP, IpServer);
     }
 
     public bool ConnectToServer()
     {
         try
         {
-            client = new TcpClient(IpV4, serverPort);
+            Debug.Log(IpServer);
+            client = new TcpClient(IpServer, serverPort);
             stream = client.GetStream();
 
             clientReceiveThread = new Thread(new ThreadStart(ListenForData));

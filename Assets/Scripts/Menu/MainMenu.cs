@@ -75,9 +75,12 @@ public class MainMenu : MonoBehaviour
     {
         MainMenuJoinRoom.localScale = off;
         MainMenuWaitForConnection.localScale = on;
+
         client = Instantiate(ClientPrefab);
         client.GetComponent<Client>().SetClientIP(ConnectToIP.GetComponent<TMPro.TextMeshProUGUI>().text);
+        
         bool connectionSuccess = client.GetComponent<Client>().ConnectToServer();
+
         if (connectionSuccess) 
         {
             SucceedToConnect(); 
@@ -98,8 +101,10 @@ public class MainMenu : MonoBehaviour
         Invoke("UpdateIP", 1);
 
         MainMenuStart.localScale = off;
+        MainMenuWaitForConnection.localScale = off;
         MainMenuRoom.localScale = on;
     }
+    
     public void BackToMenuBecauseDoNotWantToJoinRoom() 
     {
         MainMenuJoinRoom.localScale = off;
