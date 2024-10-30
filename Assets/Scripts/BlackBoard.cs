@@ -7,7 +7,7 @@ using UnityEngine;
 public enum DataKey{
     ACTION_CHAT,
     PLAYER_NICKNAME,
-    SERVER,
+    SERVER_IP,
 }
 
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/BlackBoard", order = 1)]

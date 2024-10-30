@@ -13,11 +13,14 @@ public class MainMenu : MonoBehaviour
     [SerializeField] RectTransform Chat;
     [SerializeField] RectTransform InGamePanel;
     [SerializeField] GameObject ServerPrefab;
+    [SerializeField] GameObject ClientPrefab;
     [SerializeField] BlackBoard Data;
     [SerializeField] GameObject NickName;
+    [SerializeField] GameObject ConnectToIP;
     [SerializeField] GameObject IP;
 
     private GameObject server = null;
+    private GameObject client = null;
     Vector3 on = new Vector3(1, 1);
     Vector3 off = new Vector3(0, 0);
 
@@ -31,15 +34,16 @@ public class MainMenu : MonoBehaviour
         Chat.localScale = off;
         InGamePanel.localScale = off;
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
-        Data.AddData<GameObject>(DataKey.SERVER, server);
+<<<<<<< Updated upstream
+=======
+        Data.AddData<string>(DataKey.SERVER_IP, "0");
+>>>>>>> Stashed changes
     }
 
     public void CreateRoom() 
     {
-        MainMenuStart.localScale = off;
-        MainMenuRoom.localScale = on;
-        
         server = Instantiate(ServerPrefab);
+<<<<<<< Updated upstream
 
         Data.SetData(DataKey.SERVER, server);
         Data.SetData(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
@@ -48,7 +52,16 @@ public class MainMenu : MonoBehaviour
         
         Debug.Log(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
         Debug.Log(Data.GetValue<GameObject>(DataKey.SERVER).GetComponent<Server>().IpV4);
+=======
+        SucceedToConnect(); 
+>>>>>>> Stashed changes
     }
+
+    void UpdateIP()
+    {
+        IP.GetComponent<TMPro.TextMeshProUGUI>().text = Data.GetValue<string>(DataKey.SERVER_IP);
+    }
+
     public void JoinRoom() 
     {
         MainMenuStart.localScale = off;
@@ -76,6 +89,15 @@ public class MainMenu : MonoBehaviour
     {
         MainMenuJoinRoom.localScale = off;
         MainMenuWaitForConnection.localScale = on;
+        client = Instantiate(ClientPrefab);
+        client.GetComponent<Client>().SetClientIP(ConnectToIP.GetComponent<TMPro.TextMeshProUGUI>().text);
+        bool connectionSuccess = client.GetComponent<Client>().ConnectToServer();
+        if (connectionSuccess) 
+        {
+            SucceedToConnect(); 
+        } else {
+            FailToConnect();
+        }
     }
 
     public void FailToConnect() 
@@ -84,6 +106,14 @@ public class MainMenu : MonoBehaviour
         MainMenuConnectionFail.localScale = on;
     }
 
+    public void SucceedToConnect() 
+    {
+        Data.SetData(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
+        Invoke("UpdateIP", 1);
+
+        MainMenuStart.localScale = off;
+        MainMenuRoom.localScale = on;
+    }
     public void BackToMenuBecauseDoNotWantToJoinRoom() 
     {
         MainMenuJoinRoom.localScale = off;

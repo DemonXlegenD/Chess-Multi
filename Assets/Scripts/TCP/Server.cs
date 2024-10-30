@@ -12,6 +12,7 @@ using UnityEditor.VersionControl;
 public class Server : MonoBehaviour
 {
     [SerializeField] private Chat chat;
+    [SerializeField] BlackBoard Data;
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
 
@@ -46,6 +47,7 @@ public class Server : MonoBehaviour
         {
             if (ip.AddressFamily == AddressFamily.InterNetwork)
             {
+                Data.SetData(DataKey.SERVER_IP, ip.ToString());
                 return ip.ToString();
             }
         }
