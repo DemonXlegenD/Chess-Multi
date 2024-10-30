@@ -31,6 +31,7 @@ public class MainMenu : MonoBehaviour
         Chat.localScale = off;
         InGamePanel.localScale = off;
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
+        Data.AddData<GameObject>(DataKey.SERVER, server);
     }
 
     public void CreateRoom() 
@@ -40,7 +41,7 @@ public class MainMenu : MonoBehaviour
         
         server = Instantiate(ServerPrefab);
 
-        Data.AddData<GameObject>(DataKey.SERVER, server);
+        Data.SetData(DataKey.SERVER, server);
         Data.SetData(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
 
         IP.GetComponent<TMPro.TextMeshProUGUI>().text = Data.GetValue<GameObject>(DataKey.SERVER).GetComponent<Server>().IpV4;
