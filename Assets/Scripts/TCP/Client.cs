@@ -12,7 +12,9 @@ public class Client : MonoBehaviour
 {
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;    
-    [SerializeField] public int WaitBeforeStarting = 5;    
+    [SerializeField] public int WaitBeforeStarting = 5;   
+    [SerializeField] BlackBoard Data;
+ 
     public string messageToSend = "Hello Server!";
 
     private TcpClient client;
@@ -41,7 +43,13 @@ public class Client : MonoBehaviour
         }
     }
 
-    void ConnectToServer()
+    public void SetClientIP(string ip_) 
+    {
+        IpV4 = ip_;
+        Data.SetData(DataKey.SERVER_IP, ip_);
+    }
+
+    public bool ConnectToServer()
     {
         try
         {
@@ -51,10 +59,12 @@ public class Client : MonoBehaviour
             clientReceiveThread = new Thread(new ThreadStart(ListenForData));
             clientReceiveThread.IsBackground = true;
             clientReceiveThread.Start();
+            return true;
         }
         catch (SocketException e)
         {
             Debug.LogError("SocketException: " + e.ToString());
+            return false;
         }
     }
 
