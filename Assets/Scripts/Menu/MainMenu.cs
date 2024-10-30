@@ -34,27 +34,13 @@ public class MainMenu : MonoBehaviour
         Chat.localScale = off;
         InGamePanel.localScale = off;
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
-<<<<<<< Updated upstream
-=======
         Data.AddData<string>(DataKey.SERVER_IP, "0");
->>>>>>> Stashed changes
     }
 
     public void CreateRoom() 
     {
         server = Instantiate(ServerPrefab);
-<<<<<<< Updated upstream
-
-        Data.SetData(DataKey.SERVER, server);
-        Data.SetData(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
-
-        IP.GetComponent<TMPro.TextMeshProUGUI>().text = Data.GetValue<GameObject>(DataKey.SERVER).GetComponent<Server>().IpV4;
-        
-        Debug.Log(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-        Debug.Log(Data.GetValue<GameObject>(DataKey.SERVER).GetComponent<Server>().IpV4);
-=======
         SucceedToConnect(); 
->>>>>>> Stashed changes
     }
 
     void UpdateIP()
