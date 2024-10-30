@@ -135,6 +135,17 @@ public class Server : MonoBehaviour
         server.Stop();
         serverThread.Abort();
     }
+    
+    public void QuitServer() 
+    {
+        foreach (var client in clients.Values)
+        {
+            client.Stream.Close();
+            client.TcpClient.Close();
+        }
+        server.Stop();
+        serverThread.Abort();
+    }
 
     public void SendMessageToClient(int clientId, string message)
     {
