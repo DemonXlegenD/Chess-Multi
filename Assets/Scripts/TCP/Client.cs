@@ -30,13 +30,14 @@ public class Client : MonoBehaviour
         {
             SendMessageToServer(messageToSend);
 
-            ChatMessage chat = new ChatMessage("Jean", DateTime.Now, "bouh");
+            ChatMessage chat = new ChatMessage("Jean", DateTime.Now, "bouh", SendTo.ALL_CLIENTS);
 
-            byte[] buffer = chat.SerializeToBytes();
-            Debug.Log(buffer);
+            byte[] buffer = DataSerialize.SerializeToBytes(chat);
 
-            ChatMessage oldChat = new ChatMessage(ChatMessage.DeserializeFromBytes<StructMessageChat>(buffer));
-            Debug.Log(oldChat.TypeMessage.Pseudo);
+            Debug.Log(DataSerialize.DeserializeTypeFromBytes(buffer));
+
+           // StructMessageChat oldChat = DataSerialize.DeserializeFromBytes<StructMessageChat>(buffer);
+           // Debug.Log(oldChat.Pseudo);
         }
     }
 
@@ -72,6 +73,7 @@ public class Client : MonoBehaviour
                         var incomingData = new byte[length];
                         Array.Copy(bytes, 0, incomingData, 0, length);
 
+                      
                         string serverMessage = Encoding.UTF8.GetString(incomingData);
                         Debug.Log("Server message received: " + serverMessage);
                     }
@@ -95,6 +97,16 @@ public class Client : MonoBehaviour
         byte[] data = Encoding.UTF8.GetBytes(message);
         stream.Write(data, 0, data.Length);
         Debug.Log("Sent message to server: " + message);
+    }
+
+    public void SendDataToServer(byte[] data)
+    {
+        if (client == null || !client.Connected)
+        {
+            Debug.LogError("Client not connected to server.");
+            return;
+        }
+        stream.Write(data, 0, data.Length);
     }
 
 
