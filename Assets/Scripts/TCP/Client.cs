@@ -6,6 +6,8 @@ using System.Threading;
 using UnityEngine;
 using System.Collections;
 using UnityEditor.VersionControl;
+using static System.Collections.Specialized.BitVector32;
+using System.Collections.Generic;
 
 
 public class Client : MonoBehaviour
@@ -30,11 +32,13 @@ public class Client : MonoBehaviour
         {
             SendMessageToServer(messageToSend);
 
-            ChatMessage chat = new ChatMessage("Jean", DateTime.Now, "bouh", SendTo.ALL_CLIENTS);
+            StructMessageChat chat = new StructMessageChat("Jean", DateTime.Now, "bouh", SendTo.ALL_CLIENTS);
 
             byte[] buffer = DataSerialize.SerializeToBytes(chat);
 
-            Debug.Log(DataSerialize.DeserializeTypeFromBytes(buffer));
+            SendDataToServer(buffer);
+
+            //Debug.Log(DataSerialize.DeserializeTypeFromBytes(buffer));
 
            // StructMessageChat oldChat = DataSerialize.DeserializeFromBytes<StructMessageChat>(buffer);
            // Debug.Log(oldChat.Pseudo);
@@ -73,6 +77,7 @@ public class Client : MonoBehaviour
                         var incomingData = new byte[length];
                         Array.Copy(bytes, 0, incomingData, 0, length);
 
+                        DataProcessing(incomingData);
                       
                         string serverMessage = Encoding.UTF8.GetString(incomingData);
                         Debug.Log("Server message received: " + serverMessage);
@@ -83,6 +88,19 @@ public class Client : MonoBehaviour
         catch (SocketException socketException)
         {
             Debug.Log("Socket exception: " + socketException);
+        }
+    }
+
+    public void DataProcessing(byte[] _data)
+    {
+        try
+        {
+            ICallAction action = DataSerialize.DeserializeFromBytes<ICallAction>(_data);
+            action.CallAction();
+        }
+        catch
+        {
+            Debug.Log("Failed");
         }
     }
 

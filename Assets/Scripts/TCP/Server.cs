@@ -6,6 +6,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEditor.VersionControl;
 
 
 public class Server : MonoBehaviour
@@ -109,8 +110,12 @@ public class Server : MonoBehaviour
                 data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
-                string broadcastMessage = "Client " + clientInfo.Id + ": " + data;
-                BroadcastMessageToClients(broadcastMessage);
+                //string broadcastMessage = "Client " + clientInfo.Id + ": " + data;
+                //BroadcastMessageToClients(broadcastMessage);
+
+                SendToData(buffer);
+
+               
             }
         }
         catch (SocketException e)
@@ -125,6 +130,29 @@ public class Server : MonoBehaviour
         }
     }
 
+    public void SendToData(byte[] _data)
+    {
+        ISendTo typeSendTo = DataSerialize.DeserializeFromBytes<ISendTo>(_data);
+
+        switch (typeSendTo.SendTo)
+        {
+            case SendTo.OPPONENT:
+                Debug.Log("Opponent");
+                break;
+            case SendTo.ALL_CLIENTS:
+                Debug.Log("AllClient");
+                BroadcastDataToAllClients(_data);
+                break;
+            case SendTo.SPECTATOR:
+                Debug.Log("Spectator");
+                break;
+            default:
+                Debug.Log("None");
+                break;
+        }
+    }
+
+
     private void OnApplicationQuit()
     {
         foreach (var client in clients.Values)
@@ -136,6 +164,7 @@ public class Server : MonoBehaviour
         serverThread.Abort();
     }
 
+    #region Basic Message
     public void SendMessageToClient(int clientId, string message)
     {
         if (clients.ContainsKey(clientId))
@@ -154,6 +183,28 @@ public class Server : MonoBehaviour
             SendMessageToClient(client.Id, message);
         }
     }
+
+    #endregion
+
+    #region Data
+
+    public void SendDataToClient(int _clientId, byte[] _data)
+    {
+        if (clients.ContainsKey(_clientId))
+        {
+            clients[_clientId].Stream.Write(_data, 0, _data.Length);
+        }
+    }
+
+    public void BroadcastDataToAllClients(byte[] _data)
+    {
+        foreach (var client in clients.Values)
+        {
+            SendDataToClient(client.Id, _data);
+        }
+    }
+
+    #endregion
 }
 
 public class ClientInfo
