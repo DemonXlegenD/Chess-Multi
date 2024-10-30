@@ -4,15 +4,12 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using System.Collections;
-using UnityEditor.VersionControl;
-using static System.Collections.Specialized.BitVector32;
-using System.Collections.Generic;
 
 
 public class Client : MonoBehaviour
 {
-    private string IpServer;
+    private string IpServer = string.Empty;
+    [SerializeField] public string Pseudo = "JEAN";
     [SerializeField] public int serverPort = 4269;    
     [SerializeField] public int WaitBeforeStarting = 5;   
     [SerializeField] BlackBoard Data;
@@ -55,17 +52,18 @@ public class Client : MonoBehaviour
         Data.SetData(DataKey.SERVER_IP, IpServer);
     }
 
+
     public bool ConnectToServer()
     {
         try
         {
-            Debug.Log(IpServer);
             client = new TcpClient(IpServer, serverPort);
             stream = client.GetStream();
 
             clientReceiveThread = new Thread(new ThreadStart(ListenForData));
             clientReceiveThread.IsBackground = true;
             clientReceiveThread.Start();
+
             return true;
         }
         catch (SocketException e)
@@ -73,6 +71,7 @@ public class Client : MonoBehaviour
             Debug.LogError("SocketException: " + e.ToString());
             return false;
         }
+
     }
 
     private void ListenForData()
@@ -108,6 +107,7 @@ public class Client : MonoBehaviour
     {
         try
         {
+            Debug.Log("PROCESSING");
             IAction action = DataSerialize.DeserializeFromBytes<IAction>(_data);
             action.CallAction(ActionBlackBoard);
         }

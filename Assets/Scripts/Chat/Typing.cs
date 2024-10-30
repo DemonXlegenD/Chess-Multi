@@ -9,7 +9,7 @@ public class Typing : MonoBehaviour
 {
     [SerializeField] private Chat chat;
     [SerializeField] private Client client;
-    // Start is called before the first frame update
+
     void Start()
     {
         
@@ -17,17 +17,17 @@ public class Typing : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            Debug.Log("Type");
-            SendMessageToChat("Jean", "Salut Monsieur", SendTo.ALL_CLIENTS);
-        }
+
     }
 
-    public void SendMessageToChat(string pseudo, string contenu, SendTo _sendTo)
+    public void SendMessageToChat(string contenu)
     {
-        StructMessageChat chat_message = new StructMessageChat(pseudo, DateTime.Now, contenu, _sendTo, DataKey.ACTION_CHAT);
+        client = FindAnyObjectByType<Client>();
+        if (client != null)
+        {
+            StructMessageChat chat_message = new StructMessageChat(client.Pseudo, DateTime.Now, contenu, SendTo.ALL_CLIENTS, DataKey.ACTION_CHAT);
 
-        client.SendDataToServer(DataSerialize.SerializeToBytes(chat_message));
+            client.SendDataToServer(DataSerialize.SerializeToBytes(chat_message));
+        }
     }
 }
