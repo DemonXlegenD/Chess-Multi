@@ -29,7 +29,7 @@ public class GUIManager : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
-        whiteToMoveTr = transform.Find("WhiteTurnText");
+        /*whiteToMoveTr = transform.Find("WhiteTurnText");
         blackToMoveTr = transform.Find("BlackTurnText");
 
         whiteToMoveTr.gameObject.SetActive(false);
@@ -39,7 +39,7 @@ public class GUIManager : MonoBehaviour
         blackScoreText = transform.Find("BlackScoreText").GetComponent<Text>();
 
         ChessGameManager.Instance.OnPlayerTurn += DisplayTurn;
-        ChessGameManager.Instance.OnScoreUpdated += UpdateScore;
+        ChessGameManager.Instance.OnScoreUpdated += UpdateScore;*/
     }
 	
     void DisplayTurn(bool isWhiteMove)

@@ -11,6 +11,7 @@ public class Chat : MonoBehaviour
     [SerializeField] private RectTransform _content;
     public List<string> chat = new List<string>();
     [SerializeField] private TextMeshProUGUI TextMeshPro;
+    [SerializeField] private BlackBoard ActionBlackBoard;
 
     public Action<string> action;
     
@@ -26,6 +27,7 @@ public class Chat : MonoBehaviour
     void Start()
     {
         action = AddMessage;
+        ActionBlackBoard.AddData<Action<string>>(DataKey.ACTION_CHAT, action);
     }
 
     // Update is called once per frame

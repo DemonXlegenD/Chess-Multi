@@ -13,45 +13,34 @@ public interface ISendTo
     public SendTo SendTo { get; set; }
 }
 
-public interface IAction<T>
+public interface IAction
 {
-    public Action<T> Action { get; set; }
-
+    public DataKey ActionDataKey { get; set; }
+    public void CallAction(BlackBoard _actionBlackBoard);
 }
 
-public interface ICallAction
-{
-    public void CallAction();
-}
 
-public interface IStructData : ISendTo, ISerializable, IAction<string>, ICallAction { }
+public interface IStructData : ISendTo, ISerializable, IAction { }
 
 
 [Serializable]
 public struct StructMessageChat : SMessageChat, IStructData
 {
-    public Action<string> Action { get; set; }
     public SendTo SendTo { get; set; }
     public string Pseudo { get; set; }
     public DateTime Timestamp { get; set; }
     public string Content { get; set; }
-    public StructMessageChat(string _pseudo, DateTime _dateTime, string _content, SendTo _sendTo)
+
+    public DataKey ActionDataKey { get; set; }
+    public StructMessageChat(string _pseudo, DateTime _dateTime, string _content, SendTo _sendTo, DataKey _actionDataKey)
     {
         Pseudo = _pseudo;
         Timestamp = _dateTime;
         Content = _content;
         SendTo = _sendTo;
-        Action = null;
+        ActionDataKey = _actionDataKey;
     }
 
-    public StructMessageChat(string _pseudo, DateTime _dateTime, string _content, SendTo _sendTo, Action<string> _action)
-    {
-        Pseudo = _pseudo;
-        Timestamp = _dateTime;
-        Content = _content;
-        SendTo = _sendTo;
-        Action = _action;
-    }
 
     public StructMessageChat(SerializationInfo _info, StreamingContext _ctxt)
     {
@@ -59,12 +48,12 @@ public struct StructMessageChat : SMessageChat, IStructData
         this.Pseudo = (string)_info.GetValue("Pseudo", typeof(string));
         this.Timestamp = (DateTime)_info.GetValue("Data", typeof(DateTime));
         this.Content = (string)_info.GetValue("Content", typeof(string));
-        this.Action = (Action<string>)_info.GetValue("Action", typeof(Action<string>));
+        this.ActionDataKey = (DataKey)_info.GetValue("ActionDataKey", typeof(DataKey));
     }
 
-    public void CallAction()
+    public void CallAction(BlackBoard _actionBlackBoard)
     {
-        Action?.Invoke(MessageFormat());
+        _actionBlackBoard.GetValue<Action<string>>(ActionDataKey)?.Invoke(MessageFormat());
     }
 
     public string MessageFormat()
@@ -79,7 +68,7 @@ public struct StructMessageChat : SMessageChat, IStructData
         _info.AddValue("Pseudo", Pseudo);
         _info.AddValue("Data", Timestamp);
         _info.AddValue("Content", Content);
-        _info.AddValue("Action", Action);
+        _info.AddValue("ActionDataKey", ActionDataKey);
     }
 
 

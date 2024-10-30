@@ -26,7 +26,7 @@ public class Typing : MonoBehaviour
 
     public void SendMessageToChat(string pseudo, string contenu, SendTo _sendTo)
     {
-        StructMessageChat chat_message = new StructMessageChat(pseudo, DateTime.Now, contenu, _sendTo, (string message) => chat.action(message));
+        StructMessageChat chat_message = new StructMessageChat(pseudo, DateTime.Now, contenu, _sendTo, DataKey.ACTION_CHAT);
 
         client.SendDataToServer(DataSerialize.SerializeToBytes(chat_message));
     }

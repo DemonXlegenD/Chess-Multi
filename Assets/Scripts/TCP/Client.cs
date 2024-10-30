@@ -17,6 +17,8 @@ public class Client : MonoBehaviour
     [SerializeField] public int WaitBeforeStarting = 5;    
     public string messageToSend = "Hello Server!";
 
+    [SerializeField] private BlackBoard ActionBlackBoard;
+
     private TcpClient client;
     private NetworkStream stream;
     private Thread clientReceiveThread;
@@ -32,7 +34,7 @@ public class Client : MonoBehaviour
         {
             SendMessageToServer(messageToSend);
 
-            StructMessageChat chat = new StructMessageChat("Jean", DateTime.Now, "bouh", SendTo.ALL_CLIENTS);
+            StructMessageChat chat = new StructMessageChat("Jean", DateTime.Now, "bouh", SendTo.ALL_CLIENTS, DataKey.ACTION_CHAT);
 
             byte[] buffer = DataSerialize.SerializeToBytes(chat);
 
@@ -95,8 +97,8 @@ public class Client : MonoBehaviour
     {
         try
         {
-            ICallAction action = DataSerialize.DeserializeFromBytes<ICallAction>(_data);
-            action.CallAction();
+            IAction action = DataSerialize.DeserializeFromBytes<IAction>(_data);
+            action.CallAction(ActionBlackBoard);
         }
         catch
         {
