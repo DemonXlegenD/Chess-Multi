@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using System.Collections;
+using UnityEditor.VersionControl;
 
 
 public class Client : MonoBehaviour
@@ -12,7 +13,7 @@ public class Client : MonoBehaviour
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;    
     [SerializeField] public int WaitBeforeStarting = 5;    
-    private string messageToSend = "Hello Server!";
+    public string messageToSend = "Hello Server!";
 
     private TcpClient client;
     private NetworkStream stream;
@@ -28,6 +29,14 @@ public class Client : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A))
         {
             SendMessageToServer(messageToSend);
+
+            ChatMessage chat = new ChatMessage("Jean", DateTime.Now, "bouh");
+
+            byte[] buffer = chat.SerializeToBytes();
+            Debug.Log(buffer);
+
+            ChatMessage oldChat = new ChatMessage(ChatMessage.DeserializeFromBytes<StructMessageChat>(buffer));
+            Debug.Log(oldChat.TypeMessage.Pseudo);
         }
     }
 
@@ -87,6 +96,8 @@ public class Client : MonoBehaviour
         stream.Write(data, 0, data.Length);
         Debug.Log("Sent message to server: " + message);
     }
+
+
 
     void OnApplicationQuit()
     {

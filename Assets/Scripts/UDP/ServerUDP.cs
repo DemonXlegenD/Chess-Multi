@@ -1,28 +1,32 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using UnityEngine;
+using System.Threading;
 
 public class ServerUDP : MonoBehaviour
 {
     private UdpClient udpServer;
     private IPEndPoint remoteEndPoint;
     [SerializeField] public int serverPort = 4269;
+    Thread serverThread;
 
     private void Start()
     {
-        StartUDPServer(serverPort);
+        serverThread = new Thread(new ThreadStart(StartUDPServer));
+        serverThread.Start();
     }
 
-    private void StartUDPServer(int port)
+    private void StartUDPServer()
     {
-        udpServer = new UdpClient(port);
-        remoteEndPoint = new IPEndPoint(IPAddress.Any, port);
+        udpServer = new UdpClient(serverPort);
+        remoteEndPoint = new IPEndPoint(IPAddress.Any, serverPort);
 
         Debug.Log("Server started. Waiting for messages...");
 
-        // Start receiving data asynchronously
         udpServer.BeginReceive(ReceiveData, null);
+        
     }
 
     private void ReceiveData(IAsyncResult result)
@@ -32,9 +36,6 @@ public class ServerUDP : MonoBehaviour
 
         Debug.Log("Received from client: " + receivedMessage);
 
-        // Process the received data
-
-        // Continue receiving data asynchronously
         udpServer.BeginReceive(ReceiveData, null);
     }
 
