@@ -13,12 +13,12 @@ public class Server : MonoBehaviour
     [SerializeField] private Chat chat;
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
+
     TcpListener server;
     Thread serverThread;
 
     private Dictionary<int, ClientInfo> clients = new Dictionary<int, ClientInfo>();
     private int clientCounter = 0;
-    private int messageCount = 0; // Compteur de messages reçus
 
     #region Monobehaviours
     void Start()
@@ -109,11 +109,7 @@ public class Server : MonoBehaviour
                 data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
-                // Incrémente le compteur de messages reçus
-                messageCount++;
-
                 string broadcastMessage = "Client " + clientInfo.Id + ": " + data;
-
                 BroadcastMessageToClients(broadcastMessage);
             }
         }
