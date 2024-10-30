@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
@@ -12,15 +9,15 @@ public class MainMenu : MonoBehaviour
     [SerializeField] RectTransform MainMenuRoom;
     [SerializeField] RectTransform Chat;
     [SerializeField] RectTransform InGamePanel;
-    [SerializeField] GameObject ServerPrefab;
-    [SerializeField] GameObject ClientPrefab;
+    [SerializeField] Server ServerPrefab;
+    [SerializeField] Client ClientPrefab;
     [SerializeField] BlackBoard Data;
-    [SerializeField] GameObject NickName;
-    [SerializeField] GameObject ConnectToIP;
-    [SerializeField] GameObject IP;
+    [SerializeField] TMPro.TMP_InputField NickName;
+    [SerializeField] TMPro.TMP_InputField ConnectToIP;
+    [SerializeField] TMPro.TextMeshProUGUI IP;
 
-    private GameObject server = null;
-    private GameObject client = null;
+    private Server server = null;
+    private Client client = null;
     Vector3 on = new Vector3(1, 1);
     Vector3 off = new Vector3(0, 0);
 
@@ -31,87 +28,91 @@ public class MainMenu : MonoBehaviour
         MainMenuWaitForConnection.localScale = off;
         MainMenuConnectionFail.localScale = off;
         MainMenuRoom.localScale = off;
-        Chat.localScale = off;
+        Chat.localScale = on;
         InGamePanel.localScale = off;
-        Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
+        Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
         Data.AddData<string>(DataKey.SERVER_IP, "0");
     }
 
-    public void CreateRoom() 
+    public void CreateRoom()
     {
         server = Instantiate(ServerPrefab);
-        SucceedToConnect(); 
+        SucceedToConnect();
     }
 
     void UpdateIP()
     {
-        IP.GetComponent<TMPro.TextMeshProUGUI>().text = Data.GetValue<string>(DataKey.SERVER_IP);
+        Debug.Log(Data);
+        IP.text = Data.GetValue<string>(DataKey.SERVER_IP);
     }
 
-    public void JoinRoom() 
+    public void JoinRoom()
     {
         MainMenuStart.localScale = off;
         MainMenuJoinRoom.localScale = on;
     }
 
-    public void LeaveRoom() 
+    public void LeaveRoom()
     {
-        if (server != null) 
+        if (server != null)
         {
-            server.GetComponent<Server>().QuitServer();
+            server.QuitServer();
             Destroy(server);
         }
         MainMenuRoom.localScale = off;
         MainMenuStart.localScale = on;
     }
 
-    public void StartGame() 
+    public void StartGame()
     {
         MainMenuRoom.localScale = off;
         InGamePanel.localScale = on;
     }
 
-    public void TryToConnect() 
+    public void TryToConnect()
     {
         MainMenuJoinRoom.localScale = off;
         MainMenuWaitForConnection.localScale = on;
 
         client = Instantiate(ClientPrefab);
-        client.GetComponent<Client>().SetClientIP(ConnectToIP.GetComponent<TMPro.TextMeshProUGUI>().text);
-        
-        bool connectionSuccess = client.GetComponent<Client>().ConnectToServer();
+        string ip_address = ConnectToIP.text;
+        client.SetClientIP(ip_address); // Remove the last character '\0'
 
-        if (connectionSuccess) 
+        bool connectionSuccess = client.ConnectToServer();
+
+        if (connectionSuccess)
         {
-            SucceedToConnect(); 
-        } else {
+            SucceedToConnect();
+        }
+        else
+        {
             FailToConnect();
         }
     }
 
-    public void FailToConnect() 
+    public void FailToConnect()
     {
         MainMenuWaitForConnection.localScale = off;
         MainMenuConnectionFail.localScale = on;
     }
 
-    public void SucceedToConnect() 
+    public void SucceedToConnect()
     {
-        Data.SetData(DataKey.PLAYER_NICKNAME, NickName.GetComponent<TMPro.TextMeshProUGUI>().text);
+        Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         Invoke("UpdateIP", 1);
 
         MainMenuStart.localScale = off;
         MainMenuWaitForConnection.localScale = off;
         MainMenuRoom.localScale = on;
     }
-    
-    public void BackToMenuBecauseDoNotWantToJoinRoom() 
+
+    public void BackToMenuBecauseDoNotWantToJoinRoom()
     {
         MainMenuJoinRoom.localScale = off;
         MainMenuStart.localScale = on;
     }
 
-    public void BackToMenuAfterFailToConnect() 
+    public void BackToMenuAfterFailToConnect()
     {
         MainMenuConnectionFail.localScale = off;
         MainMenuStart.localScale = on;
