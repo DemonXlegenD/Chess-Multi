@@ -17,6 +17,7 @@ public class Typing : MonoBehaviour
 
     private void Update()
     {
+
     }
 
     public void SendMessageToChat(string contenu)
