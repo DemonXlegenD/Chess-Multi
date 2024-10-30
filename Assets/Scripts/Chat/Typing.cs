@@ -9,7 +9,7 @@ public class Typing : MonoBehaviour
 {
     [SerializeField] private Chat chat;
     [SerializeField] private Client client;
-    // Start is called before the first frame update
+
     void Start()
     {
         
@@ -17,11 +17,6 @@ public class Typing : MonoBehaviour
 
     private void Update()
     {
-       /* if (Input.GetKeyDown(KeyCode.T))
-        {
-            Debug.Log("Type");
-            SendMessageToChat("Jean", "Salut Monsieur", SendTo.ALL_CLIENTS);
-        }*/
     }
 
     public void SendMessageToChat(string contenu)
