@@ -34,8 +34,9 @@ public class MainMenu : MonoBehaviour
         MainMenuWaitForConnection.localScale = off;
         MainMenuConnectionFail.localScale = off;
         MainMenuRoom.localScale = off;
-        Chat.localScale = on;
+        Chat.localScale = off;
         InGamePanel.localScale = off;
+
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
         Data.AddData<string>(DataKey.SERVER_IP, "0");
         Data.AddData<bool>(DataKey.IS_HOST, false);
@@ -47,12 +48,6 @@ public class MainMenu : MonoBehaviour
         Invoke("HostConnection", 1);
     }
 
-    void UpdateIP()
-    {
-        Debug.Log(Data);
-        IP.text = Data.GetValue<string>(DataKey.SERVER_IP);
-    }
-
     public void JoinRoom() 
     {
         Data.SetData(DataKey.IS_HOST, false);
@@ -62,20 +57,25 @@ public class MainMenu : MonoBehaviour
 
     public void LeaveRoom() 
     {
+        client.QuitClient();
         Destroy(client.gameObject);
 
-        if (server != null)
+        if (Data.GetValue<bool>(DataKey.IS_HOST))
         {
             server.QuitServer();
             Destroy(server.gameObject);
         }
 
         ChangeMenu(MainMenuStart);
+        Chat.localScale = off;
     }
 
     public void StartGame() 
     {
-        ChangeMenu(InGamePanel);
+        if (Data.GetValue<bool>(DataKey.IS_HOST)) 
+        {
+            ChangeMenu(InGamePanel);
+        }
     }
 
     public void TryToConnect() 
@@ -89,6 +89,7 @@ public class MainMenu : MonoBehaviour
     {
         ProcessConnectClient(Data.GetValue<string>(DataKey.SERVER_IP));
     }
+
     public void ProcessConnectClient(string ip) 
     {
         client = Instantiate(ClientPrefab);
@@ -122,6 +123,8 @@ public class MainMenu : MonoBehaviour
     public void FailToConnect() 
     {
         Data.SetData(DataKey.IS_HOST, false);
+        client.QuitClient();
+        Destroy(client.gameObject);
 
         ChangeMenu(MainMenuConnectionFail);
     }
@@ -132,7 +135,15 @@ public class MainMenu : MonoBehaviour
         Invoke("UpdateIP", 1);
 
         ChangeMenu(MainMenuRoom);
+        Chat.localScale = on;
     }
+
+    void UpdateIP()
+    {
+        Debug.Log(Data);
+        IP.text = Data.GetValue<string>(DataKey.SERVER_IP);
+    }
+
     public void BackToMenuBecauseDoNotWantToJoinRoom() 
     {
         ChangeMenu(MainMenuStart);
