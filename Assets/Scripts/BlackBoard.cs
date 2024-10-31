@@ -8,6 +8,7 @@ public enum DataKey{
     ACTION_CHAT,
     PLAYER_NICKNAME,
     SERVER_IP,
+    IS_HOST,
 }
 
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/BlackBoard", order = 1)]

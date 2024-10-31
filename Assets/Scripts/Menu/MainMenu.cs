@@ -1,4 +1,7 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
@@ -16,6 +19,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] TMPro.TMP_InputField ConnectToIP;
     [SerializeField] TMPro.TextMeshProUGUI IP;
 
+    private RectTransform currentMenu;
     private Server server = null;
     private Client client = null;
     Vector3 on = new Vector3(1, 1);
@@ -23,7 +27,9 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
-        MainMenuStart.localScale = on;
+        currentMenu = MainMenuStart;
+        currentMenu.localScale = on;
+        
         MainMenuJoinRoom.localScale = off;
         MainMenuWaitForConnection.localScale = off;
         MainMenuConnectionFail.localScale = off;
@@ -32,12 +38,13 @@ public class MainMenu : MonoBehaviour
         InGamePanel.localScale = off;
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
         Data.AddData<string>(DataKey.SERVER_IP, "0");
+        Data.AddData<bool>(DataKey.IS_HOST, false);
     }
 
-    public void CreateRoom()
+    public void CreateRoom() 
     {
         server = Instantiate(ServerPrefab);
-        SucceedToConnect();
+        Invoke("HostConnection", 1);
     }
 
     void UpdateIP()
@@ -46,75 +53,100 @@ public class MainMenu : MonoBehaviour
         IP.text = Data.GetValue<string>(DataKey.SERVER_IP);
     }
 
-    public void JoinRoom()
+    public void JoinRoom() 
     {
-        MainMenuStart.localScale = off;
-        MainMenuJoinRoom.localScale = on;
+        Data.SetData(DataKey.IS_HOST, false);
+
+        ChangeMenu(MainMenuJoinRoom);
     }
 
-    public void LeaveRoom()
+    public void LeaveRoom() 
     {
+        Destroy(client.gameObject);
+
         if (server != null)
         {
             server.QuitServer();
-            Destroy(server);
+            Destroy(server.gameObject);
         }
-        MainMenuRoom.localScale = off;
-        MainMenuStart.localScale = on;
+
+        ChangeMenu(MainMenuStart);
     }
 
-    public void StartGame()
+    public void StartGame() 
     {
-        MainMenuRoom.localScale = off;
-        InGamePanel.localScale = on;
+        ChangeMenu(InGamePanel);
     }
 
-    public void TryToConnect()
+    public void TryToConnect() 
     {
-        MainMenuJoinRoom.localScale = off;
-        MainMenuWaitForConnection.localScale = on;
+        ChangeMenu(MainMenuConnectionFail);
 
+        ProcessConnectClient(ConnectToIP.text);    
+    }
+
+    public void HostConnection() 
+    {
+        ProcessConnectClient(Data.GetValue<string>(DataKey.SERVER_IP));
+    }
+    public void ProcessConnectClient(string ip) 
+    {
         client = Instantiate(ClientPrefab);
-        string ip_address = ConnectToIP.text;
+        string ip_address = ip;
         client.SetClientIP(ip_address); // Remove the last character '\0'
 
         bool connectionSuccess = client.ConnectToServer();
 
         if (connectionSuccess)
         {
-            SucceedToConnect();
-        }
-        else
-        {
+            SucceedToConnect(); 
+        } else {
             FailToConnect();
         }
     }
 
-    public void FailToConnect()
+    public bool SetUpClientConnection() 
     {
-        MainMenuWaitForConnection.localScale = off;
-        MainMenuConnectionFail.localScale = on;
+        client = Instantiate(ClientPrefab);
+        string ip_address = Data.GetValue<string>(DataKey.SERVER_IP);
+
+        if (ip_address == "0") 
+        {
+            ip_address = ConnectToIP.text;
+        }        
+        client.SetClientIP(ip_address); // Remove the last character '\0'
+
+        return client.ConnectToServer();
     }
 
-    public void SucceedToConnect()
+    public void FailToConnect() 
+    {
+        Data.SetData(DataKey.IS_HOST, false);
+
+        ChangeMenu(MainMenuConnectionFail);
+    }
+
+    public void SucceedToConnect() 
     {
         Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         Invoke("UpdateIP", 1);
 
-        MainMenuStart.localScale = off;
-        MainMenuWaitForConnection.localScale = off;
-        MainMenuRoom.localScale = on;
+        ChangeMenu(MainMenuRoom);
+    }
+    public void BackToMenuBecauseDoNotWantToJoinRoom() 
+    {
+        ChangeMenu(MainMenuStart);
     }
 
-    public void BackToMenuBecauseDoNotWantToJoinRoom()
+    public void BackToMenuAfterFailToConnect() 
     {
-        MainMenuJoinRoom.localScale = off;
-        MainMenuStart.localScale = on;
+        ChangeMenu(MainMenuStart);
     }
 
-    public void BackToMenuAfterFailToConnect()
+    public void ChangeMenu(RectTransform menuToDisplay) 
     {
-        MainMenuConnectionFail.localScale = off;
-        MainMenuStart.localScale = on;
+        currentMenu.localScale = off;
+        currentMenu = menuToDisplay;
+        currentMenu.localScale = on;
     }
 }
