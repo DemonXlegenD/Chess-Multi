@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 [Serializable]
@@ -12,7 +9,7 @@ public class Typing : MonoBehaviour
 
     void Start()
     {
-        
+
     }
 
     private void Update()
@@ -22,12 +19,16 @@ public class Typing : MonoBehaviour
 
     public void SendMessageToChat(string contenu)
     {
-        client = FindAnyObjectByType<Client>();
-        if (client != null)
+        if (contenu != string.Empty)
         {
-            StructMessageChat chat_message = new StructMessageChat(client.Pseudo, DateTime.Now, contenu, SendTo.ALL_CLIENTS, DataKey.ACTION_CHAT);
+            client = FindAnyObjectByType<Client>();
+            if (client != null)
+            {
+                StructMessageChat chat_message = new StructMessageChat(client.Pseudo, DateTime.Now, contenu, SendTo.ALL_CLIENTS, DataKey.ACTION_CHAT);
 
-            client.SendDataToServer(DataSerialize.SerializeToBytes(chat_message));
+                client.SendDataToServer(DataSerialize.SerializeToBytes(chat_message));
+            }
         }
+
     }
 }

@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 [Serializable]
 public class Chat : MonoBehaviour
 {
     private int current = 0;
-    [SerializeField] private RectTransform _content;
     public List<string> chat = new List<string>();
+    private CanvasRenderer canvas;
     [SerializeField] private TextMeshProUGUI TextMeshPro;
-    [SerializeField] private RectTransform scrollRectTransform;
+    [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private RectTransform contentRectTransform;
     [SerializeField] private BlackBoard ActionBlackBoard;
 
@@ -23,15 +25,13 @@ public class Chat : MonoBehaviour
         chat.Add(message);
  
         TextMeshPro.text += $"{message}\n";
-
-        Vector2 sizeDelta = contentRectTransform.sizeDelta;
-        sizeDelta.y = TextMeshPro.preferredHeight;
-        contentRectTransform.sizeDelta = sizeDelta;
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        canvas = GetComponent<CanvasRenderer>();
+        scrollRect = GetComponentInChildren<ScrollRect>();
         action = AddMessage;
         ActionBlackBoard.AddData<Action<string>>(DataKey.ACTION_CHAT, action);
     }
@@ -41,10 +41,19 @@ public class Chat : MonoBehaviour
     {
         if (current < chat.Count)
         {
+
+            Vector2 sizeDelta = contentRectTransform.sizeDelta;
+            sizeDelta.y = TextMeshPro.preferredHeight;
+            contentRectTransform.sizeDelta = sizeDelta;
             current++;
             TextMeshPro.ForceMeshUpdate();
             contentRectTransform.ForceUpdateRectTransforms();
-            scrollRectTransform.ForceUpdateRectTransforms();
+            
+            if (scrollRect.verticalScrollbar.gameObject.activeSelf) {
+                scrollRect.GraphicUpdateComplete();
+                scrollRect.normalizedPosition = new Vector2(0, 0);
+                scrollRect.GraphicUpdateComplete();
+            }
         }
     }
 }
