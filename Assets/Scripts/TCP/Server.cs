@@ -19,8 +19,8 @@ public class Server : MonoBehaviour
     TcpListener server;
     Thread serverThread;
 
-    private Dictionary<int, ClientInfo> clients = new Dictionary<int, ClientInfo>();
-    private int clientCounter = 0;
+    private Dictionary<uint, ClientInfo> clients = new Dictionary<uint, ClientInfo>();
+    private uint clientCounter = 0;
 
     #region Monobehaviours
     void Start()
@@ -28,15 +28,6 @@ public class Server : MonoBehaviour
         IpV4 = GetLocalIPAddress();
         serverThread = new Thread(new ThreadStart(SetupServer));
         serverThread.Start();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            BroadcastMessageToClients("Hello");
-        }
-        
     }
     #endregion
 
@@ -67,7 +58,7 @@ public class Server : MonoBehaviour
             {
                 TcpClient client = server.AcceptTcpClient();
 
-                int clientId = clientCounter++;
+                uint clientId = clientCounter++;
                 var clientInfo = new ClientInfo
                 {
                     Id = clientId,
@@ -77,6 +68,7 @@ public class Server : MonoBehaviour
                 };
 
                 clients.Add(clientId, clientInfo);
+                //SendToData ID ===> RENVOYER AU CLIENT SON ID POUR LE STOCKER DANS LE BLACKBOARD
                 BroadcastMessageToClients("Client " + clientId + " connected at " + clientInfo.ConnectionTimestamp);
 
                 Thread clientThread = new Thread(() => HandleClient(clientInfo));
@@ -112,12 +104,7 @@ public class Server : MonoBehaviour
                 data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
-                //string broadcastMessage = "Client " + clientInfo.Id + ": " + data;
-                //BroadcastMessageToClients(broadcastMessage);
-
-                SendToData(buffer);
-
-               
+                SendToData(buffer);  
             }
         }
         catch (SocketException e)
@@ -168,6 +155,7 @@ public class Server : MonoBehaviour
     
     public void QuitServer() 
     {
+        //BroadcastMessageToClients(broadcastMessage); LEAVE ROOM TO MAIN MENUE
         foreach (var client in clients.Values)
         {
             client.Stream.Close();
@@ -178,7 +166,7 @@ public class Server : MonoBehaviour
     }
 
     #region Basic Message
-    public void SendMessageToClient(int clientId, string message)
+    public void SendMessageToClient(uint clientId, string message)
     {
         if (clients.ContainsKey(clientId))
         {
@@ -201,7 +189,7 @@ public class Server : MonoBehaviour
 
     #region Data
 
-    public void SendDataToClient(int _clientId, byte[] _data)
+    public void SendDataToClient(uint _clientId, byte[] _data)
     {
         if (clients.ContainsKey(_clientId))
         {
@@ -222,7 +210,7 @@ public class Server : MonoBehaviour
 
 public class ClientInfo
 {
-    public int Id { get; set; }
+    public uint Id { get; set; }
     public TcpClient TcpClient { get; set; }
     public NetworkStream Stream { get; set; }
     public string ConnectionTimestamp { get; set; }

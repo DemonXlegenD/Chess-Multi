@@ -140,7 +140,15 @@ public class Client : MonoBehaviour
         stream.Write(data, 0, data.Length);
     }
 
-
+    public void QuitClient() 
+    {
+        if (stream != null)
+            stream.Close();
+        if (client != null)
+            client.Close();
+        if (clientReceiveThread != null)
+            clientReceiveThread.Abort();
+    }
 
     void OnApplicationQuit()
     {
