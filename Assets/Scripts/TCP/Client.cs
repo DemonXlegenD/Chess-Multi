@@ -83,7 +83,6 @@ public class Client : MonoBehaviour
             Debug.LogError("SocketException: " + e.ToString());
             return false;
         }
-
     }
 
     private void ListenForData()

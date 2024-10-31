@@ -87,6 +87,7 @@ public class MainMenu : MonoBehaviour
 
     public void HostConnection() 
     {
+        Data.SetData(DataKey.IS_HOST, true);
         ProcessConnectClient(Data.GetValue<string>(DataKey.SERVER_IP));
     }
 

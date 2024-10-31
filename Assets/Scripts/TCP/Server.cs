@@ -21,6 +21,9 @@ public class Server : MonoBehaviour
     private static Guid Id = Guid.Empty;
     private static string Name = string.Empty;
 
+    private Guid WhitePlayerID = Guid.Empty;
+    private Guid BlackPlayerID = Guid.Empty;
+
     TcpListener server;
     Thread serverThread;
 
@@ -151,6 +154,37 @@ public class Server : MonoBehaviour
                 Debug.Log("AllClient");
                 SendDataToAllClients(_data);
                 break;
+            case SendMethod.ONLY_SERVER:
+                Debug.Log("ONLY_SERVER");
+                if(package.Data is TeamRequest team_request)
+                {
+                    if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN) 
+                    {
+                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty) 
+                        {
+                            Debug.Log("join");
+                            WhitePlayerID = _clientId;
+                            SendDataToAllClients(_data);
+                        } else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty) 
+                        {
+                            BlackPlayerID = _clientId;
+                            SendDataToAllClients(_data);
+                        }
+                    } else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE) 
+                    {
+                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId) 
+                        {
+                            Debug.Log("leave");
+                            WhitePlayerID = Guid.Empty;
+                            SendDataToAllClients(_data);
+                        } else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId) 
+                        {
+                            BlackPlayerID = Guid.Empty;
+                            SendDataToAllClients(_data);
+                        }
+                    }
+                }
+                break;
             case SendMethod.ONLY_SPECTATORS:
                 Debug.Log("Spectator");
                 break;
@@ -159,7 +193,6 @@ public class Server : MonoBehaviour
                 break;
         }
     }
-
 
     private void OnApplicationQuit()
     {
@@ -224,9 +257,6 @@ public class Server : MonoBehaviour
 
     #endregion
 
-
-
-
     public class ServerConsole
     {
         static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS), new ChatMessage(string.Empty, SerializableColor.Red, DataKey.ACTION_CHAT));
@@ -241,7 +271,6 @@ public class Server : MonoBehaviour
 
     }
 }
-
 
 public class ClientInfo
 {
