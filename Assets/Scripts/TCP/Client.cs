@@ -1,21 +1,23 @@
 using System;
-using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using static UnityEditor.Timeline.TimelinePlaybackControls;
 
 
 public class Client : MonoBehaviour
 {
     private string IpServer = string.Empty;
-    public uint Id { get; set; }
+    private uint id = 0;
+    public uint Id { get { return id; } set { id = value; } }
 
     [SerializeField] public string Pseudo = "JEAN";
-    [SerializeField] public int serverPort = 4269;    
-    [SerializeField] public int WaitBeforeStarting = 5;   
+    [SerializeField] public int serverPort = 4269;
+    [SerializeField] public int WaitBeforeStarting = 5;
     [SerializeField] BlackBoard Data;
- 
+
     public string messageToSend = "Hello Server!";
 
     [SerializeField] private BlackBoard ActionBlackBoard;
@@ -23,17 +25,42 @@ public class Client : MonoBehaviour
     private TcpClient client;
     private NetworkStream stream;
     private Thread clientReceiveThread;
+    private bool firstId = false;
+
+    private void Start()
+    {
+        ActionBlackBoard.AddData<Action<uint>>(DataKey.ACTION_SET_ID, SetId);
+    }
 
     void Update()
     {
     }
 
-    public void SetClientIP(string ip_) 
+    public void SetId(uint id)
+    {
+        Debug.Log(id);
+        this.id = id;
+    }
+
+    public void SetClientIP(string ip_)
     {
         IpServer = ip_;
         Data.SetData(DataKey.SERVER_IP, IpServer);
     }
 
+    public void SendPackageId()
+    {
+
+        Header header = new Header(id, Pseudo, DateTime.Now, SendMethod.ONLY_CLIENT);
+
+        IdRequest idRequest = new IdRequest(DataKey.ACTION_SET_ID);
+
+        Package package = new Package(header, idRequest);
+
+        Debug.Log(package);
+
+        SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
 
     public bool ConnectToServer()
     {
@@ -41,9 +68,12 @@ public class Client : MonoBehaviour
         {
             client = new TcpClient(IpServer, serverPort);
             stream = client.GetStream();
+            SendPackageId();
 
-            clientReceiveThread = new Thread(new ThreadStart(ListenForData));
-            clientReceiveThread.IsBackground = true;
+            clientReceiveThread = new Thread(new ThreadStart(ListenForData))
+            {
+                IsBackground = true
+            };
             clientReceiveThread.Start();
 
             return true;
@@ -72,7 +102,7 @@ public class Client : MonoBehaviour
                         Array.Copy(bytes, 0, incomingData, 0, length);
 
                         DataProcessing(incomingData);
-                      
+
                         string serverMessage = Encoding.UTF8.GetString(incomingData);
                         Debug.Log("Server message received: " + serverMessage);
                     }
@@ -96,7 +126,7 @@ public class Client : MonoBehaviour
         }
         catch
         {
-            Debug.Log("Failed");
+            Debug.Log("ID");
         }
     }
 
@@ -123,7 +153,7 @@ public class Client : MonoBehaviour
         stream.Write(data, 0, data.Length);
     }
 
-    public void QuitClient() 
+    public void QuitClient()
     {
         if (stream != null)
             stream.Close();
@@ -141,5 +171,28 @@ public class Client : MonoBehaviour
             client.Close();
         if (clientReceiveThread != null)
             clientReceiveThread.Abort();
+    }
+}
+
+[Serializable]
+public class IdRequest : Data
+{
+    public uint Id = 0;
+    public IdRequest(DataKey _actionDataKey) : base(_actionDataKey) { }
+
+    public IdRequest(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+        this.Id = (uint)_info.GetValue("Id", typeof(uint));
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
+        _info.AddValue("Id", Id);
+    }
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action<uint>>(ActionDataKey)?.Invoke(Id);
     }
 }

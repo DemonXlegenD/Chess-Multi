@@ -17,10 +17,12 @@ public class ChatMessage : Data
         this.Content = (string)_info.GetValue("Content", typeof(string));
     }
 
-    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
     {
-        _actionBlackBoard.GetValue<Action<string>>(ActionDataKey)?.Invoke(MessageFormat(_dataPseudo.Pseudo, _dataTimestamp.Timestamp));
+        _info.AddValue("Content", Content);
+        _info.AddValue("ActionDataKey", ActionDataKey);
     }
+
 
     public string MessageFormat(string _pseudo, DateTime _timestamp)
     {
@@ -28,10 +30,10 @@ public class ChatMessage : Data
         return $"{_pseudo} [{hour_min_sec}] : {Content}";
     }
 
-    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
-        _info.AddValue("Content", Content);
-        _info.AddValue("ActionDataKey", ActionDataKey);
+        _actionBlackBoard.GetValue<Action<string>>(ActionDataKey)?.Invoke(MessageFormat(_dataPseudo.Pseudo, _dataTimestamp.Timestamp));
     }
 }
 

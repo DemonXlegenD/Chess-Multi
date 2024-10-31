@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using UnityEditor.VersionControl;
+using static Client;
 
 
 public class Server : MonoBehaviour
@@ -20,7 +21,7 @@ public class Server : MonoBehaviour
     Thread serverThread;
 
     private Dictionary<uint, ClientInfo> clients = new Dictionary<uint, ClientInfo>();
-    private uint clientCounter = 0;
+    private uint clientCounter = 10;
 
     #region Monobehaviours
     void Start()
@@ -68,7 +69,9 @@ public class Server : MonoBehaviour
                 };
 
                 clients.Add(clientId, clientInfo);
+
                 //SendToData ID ===> RENVOYER AU CLIENT SON ID POUR LE STOCKER DANS LE BLACKBOARD
+                
                 BroadcastMessageToClients("Client " + clientId + " connected at " + clientInfo.ConnectionTimestamp);
 
                 Thread clientThread = new Thread(() => HandleClient(clientInfo));
@@ -104,7 +107,7 @@ public class Server : MonoBehaviour
                 data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
-                SendToData(buffer);  
+                SendToData(buffer, clientInfo.Id);  
             }
         }
         catch (SocketException e)
@@ -119,14 +122,25 @@ public class Server : MonoBehaviour
         }
     }
 
-    public void SendToData(byte[] _data)
+    public void SendToData(byte[] _data, uint _clientId)
     {
-        SendMethod typeSendTo = DataSerialize.DeserializeFromBytes<SendMethod>(_data);
+        Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
 
-        switch (typeSendTo)
+        switch (package.Header.SendMethod)
         {
             case SendMethod.OPPONENT:
                 Debug.Log("Opponent");
+                break;
+            case SendMethod.ONLY_CLIENT:;
+                if(package.Data is IdRequest id_request)
+                {
+                    id_request.Id = _clientId;
+                    Debug.Log(package.Data);
+                    _data = DataSerialize.SerializeToBytes(package);
+                }
+
+                SendDataToClient(_clientId, _data);
+                Debug.Log("Only client");
                 break;
             case SendMethod.ALL_CLIENTS:
                 Debug.Log("AllClient");

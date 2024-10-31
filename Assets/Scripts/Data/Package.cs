@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 
 
 #region Package
+[Serializable]
 public struct Package : IHeader, IData, ISerializable
 {
     public Header Header { get; set; }

@@ -90,11 +90,12 @@ public class MainMenu : MonoBehaviour
         ProcessConnectClient(Data.GetValue<string>(DataKey.SERVER_IP));
     }
 
-    public void ProcessConnectClient(string ip) 
+    public void ProcessConnectClient(string _ip) 
     {
+        Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         client = Instantiate(ClientPrefab);
-        string ip_address = ip;
-        client.SetClientIP(ip_address); // Remove the last character '\0'
+        client.SetClientIP(_ip);
+        client.Pseudo = NickName.text;
 
         bool connectionSuccess = client.ConnectToServer();
 
@@ -131,7 +132,6 @@ public class MainMenu : MonoBehaviour
 
     public void SucceedToConnect() 
     {
-        Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         Invoke("UpdateIP", 1);
 
         ChangeMenu(MainMenuRoom);
