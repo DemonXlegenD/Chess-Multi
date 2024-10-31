@@ -45,7 +45,7 @@ public enum SendMethod
 
 public interface IIdClient
 {
-    public uint Id { get; set; }    
+    public Guid Id { get; set; }    
 }
 
 public interface IPlayerPseudo
@@ -71,13 +71,13 @@ public interface IHeader
 [Serializable]
 public struct Header : IIdClient, IPlayerPseudo, ITimestamp, ISendMethod, ISerializable
 {
-    public uint Id { get; set; }
+    public Guid Id { get; set; }
     public string Pseudo { get; set; }
     public DateTime Timestamp { get; set; }
 
     public SendMethod SendMethod { get; set; }
 
-    public Header(uint _id, string _pseudo, DateTime _timestamp, SendMethod _sendMethod)
+    public Header(Guid _id, string _pseudo, DateTime _timestamp, SendMethod _sendMethod)
     {
         this.Id = _id;
         this.Pseudo = _pseudo;
@@ -88,7 +88,7 @@ public struct Header : IIdClient, IPlayerPseudo, ITimestamp, ISendMethod, ISeria
     public Header(SerializationInfo _info, StreamingContext _context)
     {
 
-        this.Id = (uint)_info.GetValue("Id", typeof(uint));
+        this.Id = (Guid)_info.GetValue("Id", typeof(Guid));
         this.Pseudo = (string)_info.GetValue("Pseudo", typeof(string));
         this.Timestamp = (DateTime)_info.GetValue("Timestamp", typeof(DateTime));
         this.SendMethod = (SendMethod)_info.GetValue("SendMethod", typeof(SendMethod));

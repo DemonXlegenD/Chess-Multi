@@ -4,10 +4,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
-using UnityEditor.VersionControl;
 using static Client;
+using UnityEditor.PackageManager;
+using UnityEngine.Analytics;
+using UnityEditor.VersionControl;
 
 
 public class Server : MonoBehaviour
@@ -17,16 +18,17 @@ public class Server : MonoBehaviour
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
 
+    private static Guid Id = Guid.Empty;
+    private static string Name = string.Empty;
+
     TcpListener server;
     Thread serverThread;
 
-    private Dictionary<uint, ClientInfo> clients = new Dictionary<uint, ClientInfo>();
-    private uint clientCounter = 10;
+    private Dictionary<Guid, ClientInfo> clients = new Dictionary<Guid, ClientInfo>();
 
     #region Monobehaviours
     void Start()
     {
-        IpV4 = GetLocalIPAddress();
         serverThread = new Thread(new ThreadStart(SetupServer));
         serverThread.Start();
     }
@@ -50,16 +52,20 @@ public class Server : MonoBehaviour
     {
         try
         {
+            Id = Guid.NewGuid();
+            IpV4 = GetLocalIPAddress();
             IPAddress localAddr = IPAddress.Parse(IpV4);
             server = new TcpListener(localAddr, serverPort);
             server.Start();
-            Debug.Log("Server started at " + IpV4 + ":" + serverPort);
+
+            Name = $"Server-{Id}-{IpV4}-{serverPort}";
+            Debug.Log("Server started : " + Name);
 
             while (true)
             {
                 TcpClient client = server.AcceptTcpClient();
 
-                uint clientId = clientCounter++;
+                Guid clientId = Guid.NewGuid();
                 var clientInfo = new ClientInfo
                 {
                     Id = clientId,
@@ -70,9 +76,7 @@ public class Server : MonoBehaviour
 
                 clients.Add(clientId, clientInfo);
 
-                //SendToData ID ===> RENVOYER AU CLIENT SON ID POUR LE STOCKER DANS LE BLACKBOARD
-                
-                BroadcastMessageToClients("Client " + clientId + " connected at " + clientInfo.ConnectionTimestamp);
+                SendDataToAllClients(ServerConsole.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
 
                 Thread clientThread = new Thread(() => HandleClient(clientInfo));
                 clientThread.Start();
@@ -119,10 +123,11 @@ public class Server : MonoBehaviour
             client.Close();
             clients.Remove(clientInfo.Id);
             Debug.Log("Client " + clientInfo.Id + " removed from the client list.");
+            SendDataToAllClients(ServerConsole.Log($"Client {clientInfo.Id} left the party"));
         }
     }
 
-    public void SendToData(byte[] _data, uint _clientId)
+    public void SendToData(byte[] _data, Guid _clientId)
     {
         Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
 
@@ -144,7 +149,7 @@ public class Server : MonoBehaviour
                 break;
             case SendMethod.ALL_CLIENTS:
                 Debug.Log("AllClient");
-                BroadcastDataToAllClients(_data);
+                SendDataToAllClients(_data);
                 break;
             case SendMethod.ONLY_SPECTATORS:
                 Debug.Log("Spectator");
@@ -180,7 +185,7 @@ public class Server : MonoBehaviour
     }
 
     #region Basic Message
-    public void SendMessageToClient(uint clientId, string message)
+    public void SendMessageToClient(Guid clientId, string message)
     {
         if (clients.ContainsKey(clientId))
         {
@@ -189,25 +194,23 @@ public class Server : MonoBehaviour
         }
     }
 
-    public void BroadcastMessageToClients(string message)
-    {
-        Debug.Log("Broadcast message: " + message);
-
-        foreach (var client in clients.Values)
-        {
-            SendMessageToClient(client.Id, message);
-        }
-    }
-
     #endregion
 
     #region Data
 
-    public void SendDataToClient(uint _clientId, byte[] _data)
+    public void SendDataToClient(Guid _clientId, byte[] _data)
     {
         if (clients.ContainsKey(_clientId))
         {
             clients[_clientId].Stream.Write(_data, 0, _data.Length);
+        }
+    }
+
+    public void SendDataToAllClients(byte[] _data)
+    {
+        foreach (var client in clients.Values)
+        {
+            SendDataToClient(client.Id, _data);
         }
     }
 
@@ -220,11 +223,29 @@ public class Server : MonoBehaviour
     }
 
     #endregion
+
+
+
+
+    public class ServerConsole
+    {
+        static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS), new ChatMessage(string.Empty, SerializableColor.Red, DataKey.ACTION_CHAT));
+
+        public static byte[] Log(string _message)
+        {
+            ChatMessage chat_message = (ChatMessage)package.Data;
+            chat_message.Content = _message;
+
+            return DataSerialize.SerializeToBytes(package);
+        }
+
+    }
 }
+
 
 public class ClientInfo
 {
-    public uint Id { get; set; }
+    public Guid Id { get; set; }
     public TcpClient TcpClient { get; set; }
     public NetworkStream Stream { get; set; }
     public string ConnectionTimestamp { get; set; }

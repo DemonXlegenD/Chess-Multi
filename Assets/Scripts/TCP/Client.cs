@@ -10,8 +10,8 @@ using static UnityEditor.Timeline.TimelinePlaybackControls;
 public class Client : MonoBehaviour
 {
     private string IpServer = string.Empty;
-    private uint id = 0;
-    public uint Id { get { return id; } set { id = value; } }
+    private Guid id;
+    public Guid Id { get { return id; } set { id = value; } }
 
     [SerializeField] public string Pseudo = "JEAN";
     [SerializeField] public int serverPort = 4269;
@@ -29,16 +29,15 @@ public class Client : MonoBehaviour
 
     private void Start()
     {
-        ActionBlackBoard.AddData<Action<uint>>(DataKey.ACTION_SET_ID, SetId);
+        ActionBlackBoard.AddData<Action<Guid>>(DataKey.ACTION_SET_ID, SetId);
     }
 
     void Update()
     {
     }
 
-    public void SetId(uint id)
+    public void SetId(Guid id)
     {
-        Debug.Log(id);
         this.id = id;
     }
 
@@ -177,12 +176,12 @@ public class Client : MonoBehaviour
 [Serializable]
 public class IdRequest : Data
 {
-    public uint Id = 0;
+    public Guid Id;
     public IdRequest(DataKey _actionDataKey) : base(_actionDataKey) { }
 
     public IdRequest(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
     {
-        this.Id = (uint)_info.GetValue("Id", typeof(uint));
+        this.Id = (Guid)_info.GetValue("Id", typeof(Guid));
     }
 
     public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
@@ -193,6 +192,6 @@ public class IdRequest : Data
 
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
-        _actionBlackBoard.GetValue<Action<uint>>(ActionDataKey)?.Invoke(Id);
+        _actionBlackBoard.GetValue<Action<Guid>>(ActionDataKey)?.Invoke(Id);
     }
 }

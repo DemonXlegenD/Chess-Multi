@@ -41,11 +41,10 @@ public class Chat : MonoBehaviour
     {
         if (current < chat.Count)
         {
-
+            current++;
             Vector2 sizeDelta = contentRectTransform.sizeDelta;
             sizeDelta.y = TextMeshPro.preferredHeight;
-            contentRectTransform.sizeDelta = sizeDelta;
-            current++;
+            contentRectTransform.sizeDelta += sizeDelta;
             TextMeshPro.ForceMeshUpdate();
             contentRectTransform.ForceUpdateRectTransforms();
             
