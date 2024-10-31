@@ -136,7 +136,7 @@ public class Server : MonoBehaviour
             case SendMethod.OPPONENT:
                 Debug.Log("Opponent");
                 break;
-            case SendMethod.ONLY_CLIENT:;
+            case SendMethod.ONLY_CLIENT:
                 if(package.Data is IdRequest id_request)
                 {
                     id_request.Id = _clientId;

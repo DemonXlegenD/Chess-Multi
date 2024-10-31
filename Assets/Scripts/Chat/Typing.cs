@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 
 [Serializable]
@@ -9,7 +10,6 @@ public class Typing : MonoBehaviour
 
     void Start()
     {
-
     }
 
     private void Update()

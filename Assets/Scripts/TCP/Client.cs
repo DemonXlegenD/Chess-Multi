@@ -1,10 +1,10 @@
 using System;
+using System.IO;
 using System.Net.Sockets;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using static UnityEditor.Timeline.TimelinePlaybackControls;
 
 
 public class Client : MonoBehaviour
@@ -25,7 +25,7 @@ public class Client : MonoBehaviour
     private TcpClient client;
     private NetworkStream stream;
     private Thread clientReceiveThread;
-    private bool firstId = false;
+    private bool isListening = false;
 
     private void Start()
     {
@@ -68,6 +68,7 @@ public class Client : MonoBehaviour
             client = new TcpClient(IpServer, serverPort);
             stream = client.GetStream();
             SendPackageId();
+            isListening = true;
 
             clientReceiveThread = new Thread(new ThreadStart(ListenForData))
             {
@@ -90,20 +91,28 @@ public class Client : MonoBehaviour
         try
         {
             byte[] bytes = new byte[1024];
-            while (true)
+            while (isListening && stream.CanRead)
             {
                 if (stream.DataAvailable)
                 {
                     int length;
-                    while ((length = stream.Read(bytes, 0, bytes.Length)) != 0)
+                    try
                     {
-                        var incomingData = new byte[length];
-                        Array.Copy(bytes, 0, incomingData, 0, length);
+                        while ((length = stream.Read(bytes, 0, bytes.Length)) != 0)
+                        {
+                            var incomingData = new byte[length];
+                            Array.Copy(bytes, 0, incomingData, 0, length);
 
-                        DataProcessing(incomingData);
+                            DataProcessing(incomingData);
 
-                        string serverMessage = Encoding.UTF8.GetString(incomingData);
-                        Debug.Log("Server message received: " + serverMessage);
+                            string serverMessage = Encoding.UTF8.GetString(incomingData);
+                            Debug.Log("Server message received: " + serverMessage);
+                        }
+                    }
+                    catch (IOException ioException)
+                    {
+                        Debug.LogWarning("Stream read interrupted: " + ioException.Message);
+                        break; // Sortir de la boucle si le stream est interrompu
                     }
                 }
             }
@@ -111,6 +120,13 @@ public class Client : MonoBehaviour
         catch (SocketException socketException)
         {
             Debug.Log("Socket exception: " + socketException);
+        }
+        finally
+        {
+            if (stream != null)
+                stream.Close();
+            if (client != null)
+                client.Close();
         }
     }
 
@@ -121,7 +137,7 @@ public class Client : MonoBehaviour
             Debug.Log("PROCESSING");
             Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
 
-            package.Data.CallAction(ActionBlackBoard, (IPlayerPseudo)package.Header, (ITimestamp)package.Header);
+            package.Data.CallAction(ActionBlackBoard, package.Header, package.Header);
         }
         catch
         {
@@ -152,18 +168,24 @@ public class Client : MonoBehaviour
         stream.Write(data, 0, data.Length);
     }
 
+    public void StopListening()
+    {
+        isListening = false;
+        //clientReceiveThread?.Join();
+    }
+
     public void QuitClient()
     {
+        StopListening();
         if (stream != null)
             stream.Close();
         if (client != null)
             client.Close();
-        if (clientReceiveThread != null)
-            clientReceiveThread.Abort();
     }
 
     void OnApplicationQuit()
     {
+        StopListening();
         if (stream != null)
             stream.Close();
         if (client != null)

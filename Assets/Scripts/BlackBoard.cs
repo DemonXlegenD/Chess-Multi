@@ -26,7 +26,7 @@ public class BlackBoard : ScriptableObject
     public void AddData<T>(DataKey key, T y)
     {
         TypeMapping.AddValueType(key, typeof(T));
-        Data.Add(key, y);
+        if(!Data.ContainsKey(key)) Data.Add(key, y);
     }
 
     public object GetData(DataKey key)
