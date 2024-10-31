@@ -134,18 +134,18 @@ public class Server : MonoBehaviour
 
     public void SendToData(byte[] _data)
     {
-        ISendTo typeSendTo = DataSerialize.DeserializeFromBytes<ISendTo>(_data);
+        SendMethod typeSendTo = DataSerialize.DeserializeFromBytes<SendMethod>(_data);
 
-        switch (typeSendTo.SendTo)
+        switch (typeSendTo)
         {
-            case SendTo.OPPONENT:
+            case SendMethod.OPPONENT:
                 Debug.Log("Opponent");
                 break;
-            case SendTo.ALL_CLIENTS:
+            case SendMethod.ALL_CLIENTS:
                 Debug.Log("AllClient");
                 BroadcastDataToAllClients(_data);
                 break;
-            case SendTo.SPECTATOR:
+            case SendMethod.ONLY_SPECTATORS:
                 Debug.Log("Spectator");
                 break;
             default:

@@ -1,85 +1,46 @@
 using System;
 using System.Runtime.Serialization;
 
-public enum SendTo
-{
-    ALL_CLIENTS,
-    SPECTATOR,
-    OPPONENT,
-}
-
-public interface ISendTo
-{
-    public SendTo SendTo { get; set; }
-}
-
-public interface IAction
-{
-    public DataKey ActionDataKey { get; set; }
-    public void CallAction(BlackBoard _actionBlackBoard);
-}
-
-
-public interface IStructData : ISendTo, ISerializable, IAction { }
-
-
 [Serializable]
-public struct StructMessageChat : SMessageChat, IStructData
+public class ChatMessage : Data
 {
-    public SendTo SendTo { get; set; }
-    public string Pseudo { get; set; }
-    public DateTime Timestamp { get; set; }
     public string Content { get; set; }
 
-    public DataKey ActionDataKey { get; set; }
-    public StructMessageChat(string _pseudo, DateTime _dateTime, string _content, SendTo _sendTo, DataKey _actionDataKey)
+    public ChatMessage(string _content, DataKey _actionDataKey) : base(_actionDataKey)
     {
-        Pseudo = _pseudo;
-        Timestamp = _dateTime;
-        Content = _content;
-        SendTo = _sendTo;
-        ActionDataKey = _actionDataKey;
+        this.Content = _content;
     }
 
 
-    public StructMessageChat(SerializationInfo _info, StreamingContext _ctxt)
+    public ChatMessage(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
     {
-        this.SendTo = (SendTo)_info.GetValue("SendTo", typeof(SendTo));
-        this.Pseudo = (string)_info.GetValue("Pseudo", typeof(string));
-        this.Timestamp = (DateTime)_info.GetValue("Data", typeof(DateTime));
         this.Content = (string)_info.GetValue("Content", typeof(string));
-        this.ActionDataKey = (DataKey)_info.GetValue("ActionDataKey", typeof(DataKey));
     }
 
-    public void CallAction(BlackBoard _actionBlackBoard)
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
-        _actionBlackBoard.GetValue<Action<string>>(ActionDataKey)?.Invoke(MessageFormat());
+        _actionBlackBoard.GetValue<Action<string>>(ActionDataKey)?.Invoke(MessageFormat(_dataPseudo.Pseudo, _dataTimestamp.Timestamp));
     }
 
-    public string MessageFormat()
+    public string MessageFormat(string _pseudo, DateTime _timestamp)
     {
-        string hour_min_sec = Timestamp.ToString("HH:mm:ss");
-        return $"{Pseudo} [{hour_min_sec}] : {Content}";
+        string hour_min_sec = _timestamp.ToString("HH:mm:ss");
+        return $"{_pseudo} [{hour_min_sec}] : {Content}";
     }
 
-    public void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
     {
-        _info.AddValue("SendTo", SendTo);
-        _info.AddValue("Pseudo", Pseudo);
-        _info.AddValue("Data", Timestamp);
         _info.AddValue("Content", Content);
         _info.AddValue("ActionDataKey", ActionDataKey);
     }
-
-
-
 }
 
-public interface SMessageChat
+    public interface SMessageChat
 {
     public string Pseudo { get; set; }
     public DateTime Timestamp { get; set; }
     public string Content { get; set; }
 }
+
 
 

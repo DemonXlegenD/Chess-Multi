@@ -5,6 +5,7 @@ using System.Xml;
 using UnityEngine;
 
 public enum DataKey{
+    NONE,
     ACTION_CHAT,
     PLAYER_NICKNAME,
     SERVER_IP,

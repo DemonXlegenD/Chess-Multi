@@ -9,6 +9,8 @@ using UnityEngine;
 public class Client : MonoBehaviour
 {
     private string IpServer = string.Empty;
+    public uint Id { get; set; }
+
     [SerializeField] public string Pseudo = "JEAN";
     [SerializeField] public int serverPort = 4269;    
     [SerializeField] public int WaitBeforeStarting = 5;   
@@ -22,28 +24,8 @@ public class Client : MonoBehaviour
     private NetworkStream stream;
     private Thread clientReceiveThread;
 
-    /*void Start()
-    {
-        Invoke("ConnectToServer", WaitBeforeStarting);
-    }*/
-
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            SendMessageToServer(messageToSend);
-
-            StructMessageChat chat = new StructMessageChat("Jean", DateTime.Now, "bouh", SendTo.ALL_CLIENTS, DataKey.ACTION_CHAT);
-
-            byte[] buffer = DataSerialize.SerializeToBytes(chat);
-
-            SendDataToServer(buffer);
-
-            //Debug.Log(DataSerialize.DeserializeTypeFromBytes(buffer));
-
-           // StructMessageChat oldChat = DataSerialize.DeserializeFromBytes<StructMessageChat>(buffer);
-           // Debug.Log(oldChat.Pseudo);
-        }
     }
 
     public void SetClientIP(string ip_) 
@@ -108,8 +90,9 @@ public class Client : MonoBehaviour
         try
         {
             Debug.Log("PROCESSING");
-            IAction action = DataSerialize.DeserializeFromBytes<IAction>(_data);
-            action.CallAction(ActionBlackBoard);
+            Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
+
+            package.Data.CallAction(ActionBlackBoard, (IPlayerPseudo)package.Header, (ITimestamp)package.Header);
         }
         catch
         {

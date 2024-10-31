@@ -17,16 +17,21 @@ public class Typing : MonoBehaviour
 
     }
 
-    public void SendMessageToChat(string contenu)
+    public void SendMessageToChat(string _content)
     {
-        if (contenu != string.Empty)
+        if (_content != string.Empty)
         {
             client = FindAnyObjectByType<Client>();
             if (client != null)
             {
-                StructMessageChat chat_message = new StructMessageChat(client.Pseudo, DateTime.Now, contenu, SendTo.ALL_CLIENTS, DataKey.ACTION_CHAT);
+                Header header = new Header(client.Id, client.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
 
-                client.SendDataToServer(DataSerialize.SerializeToBytes(chat_message));
+                ChatMessage chat_message = new ChatMessage(_content, DataKey.ACTION_CHAT);
+
+                Package package = new Package(header, chat_message);
+
+
+                client.SendDataToServer(DataSerialize.SerializeToBytes(package));
             }
         }
 
