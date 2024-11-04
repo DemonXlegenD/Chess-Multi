@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using UnityEngine;
 
 /*
@@ -29,6 +30,7 @@ public partial class ChessGameManager : MonoBehaviour
     [SerializeField]
     private bool isAIEnabled = false;
     [SerializeField] private BlackBoard blackBoard;
+    [SerializeField] private BlackBoard ActionBlackBoard;
 
     private ChessAI chessAI = null;
     private Transform boardTransform = null;
@@ -37,8 +39,8 @@ public partial class ChessGameManager : MonoBehaviour
     private int boardLayerMask;
 
     private Client currentClient;
-    private Guid blackClientId;
-    private Guid whiteClientId;
+    private Guid blackClientId = Guid.Empty;
+    private Guid whiteClientId = Guid.Empty;
 
 
     #region Enums
@@ -246,6 +248,33 @@ public partial class ChessGameManager : MonoBehaviour
 
     #endregion
 
+    #region GameInfo
+
+    private bool IsGameInfoReady()
+    {
+        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty) return true;
+        return false;
+    }
+
+    private void AskGameInfo()
+    {
+        Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ONLY_CLIENT);
+        ChessInfoGameData data = new ChessInfoGameData(DataKey.ACTION_CHESS_GAME_INFO);
+
+        Package package = Package.CreatePackage(header, data);
+
+        currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
+
+    private void SetGameInfo(Guid black_player_id, Guid white_player_id)
+    {
+        Debug.Log("Get info : " + black_player_id + white_player_id);
+        blackClientId = black_player_id;
+        whiteClientId = white_player_id;
+    }
+
+    #endregion
+
     #region MonoBehaviour
 
     private TeamPieces[] teamPiecesArray = new TeamPieces[2];
@@ -255,8 +284,9 @@ public partial class ChessGameManager : MonoBehaviour
     void Start()
     {
         currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
-        whiteClientId = blackBoard.GetValue<Server>(DataKey.SERVER).GetWhitePlayerID();
-        blackClientId = blackBoard.GetValue<Server>(DataKey.SERVER).GetBlackPlayerID();
+        ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
+
+        AskGameInfo();
 
         pieceLayerMask = 1 << LayerMask.NameToLayer("Piece");
         boardLayerMask = 1 << LayerMask.NameToLayer("Board");
@@ -282,28 +312,34 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Update()
     {
-        if (teamTurn == EChessTeam.White)
-        { 
-            if (currentClient.Id == whiteClientId){
-                Debug.Log(currentClient.Pseudo);
-                UpdatePlayerTurn();
+        if (IsGameInfoReady())
+        {
+            if (teamTurn == EChessTeam.White)
+            {
+                if (currentClient.Id == whiteClientId)
+                {
+                    Debug.Log(currentClient.Pseudo);
+                    UpdatePlayerTurn();
+                }
+            }
+            else if (teamTurn == EChessTeam.Black)
+            {
+                if (currentClient.Id == blackClientId)
+                {
+                    Debug.Log(currentClient.Pseudo);
+                    UpdatePlayerTurn();
+                }
+            }
+            else if (isAIEnabled)
+            {
+                UpdateAITurn();
+            }
+            else
+            {
+                Watch();
             }
         }
-        else if (teamTurn == EChessTeam.Black)
-        { 
-            if (currentClient.Id == blackClientId){
-                Debug.Log(currentClient.Pseudo);
-                UpdatePlayerTurn(); 
-            }
-        }
-        else if (isAIEnabled)
-        { 
-            UpdateAITurn(); 
-        }
-        else
-        { 
-            Watch(); 
-        }
+
     }
     #endregion
 
@@ -472,4 +508,36 @@ public partial class ChessGameManager : MonoBehaviour
     }
 
     #endregion
+}
+
+[Serializable]
+public class ChessInfoGameData : Data
+{
+    public Guid WhitePlayerId = Guid.Empty;
+
+    public Guid BlackPlayerId = Guid.Empty;
+
+    public ChessInfoGameData(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action<Guid, Guid>>(ActionDataKey)?.Invoke(WhitePlayerId, BlackPlayerId);
+    }
+
+    public ChessInfoGameData(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+        WhitePlayerId = (Guid)_info.GetValue("WhitePlayerId", typeof(Guid));
+        BlackPlayerId = (Guid)_info.GetValue("BlackPlayerId", typeof(Guid));
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
+
+        _info.AddValue("WhitePlayerId", WhitePlayerId);
+        _info.AddValue("BlackPlayerId", BlackPlayerId);
+    }
 }
