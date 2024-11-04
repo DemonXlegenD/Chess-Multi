@@ -93,7 +93,6 @@ public class Server : MonoBehaviour
         {
             serverThread.Join(); // Waiting for the end of the thread
         }
-        Destroy(this.gameObject);
     }
 
     private void SetupServer()
