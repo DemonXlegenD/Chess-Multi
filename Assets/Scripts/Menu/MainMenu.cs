@@ -63,6 +63,7 @@ public class MainMenu : MonoBehaviour
             Debug.LogWarning("Leave the room");
             LeaveRoom();
             needChangePanel = false;
+
         }
     }
 
