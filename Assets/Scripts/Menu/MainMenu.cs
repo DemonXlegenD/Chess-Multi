@@ -19,6 +19,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] TMPro.TMP_InputField ConnectToIP;
     [SerializeField] TMPro.TextMeshProUGUI IP;
 
+    private TeamHandler teamHandler;
     private RectTransform toChangePanel;
 
     private RectTransform currentMenu;
@@ -32,6 +33,8 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
+        teamHandler = GetComponent<TeamHandler>();
+
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
 
@@ -63,7 +66,6 @@ public class MainMenu : MonoBehaviour
             Debug.LogWarning("Leave the room");
             LeaveRoom();
             needChangePanel = false;
-
         }
     }
 
@@ -180,7 +182,7 @@ public class MainMenu : MonoBehaviour
     public void SucceedToConnect()
     {
         Invoke("UpdateIP", 1);
-
+        teamHandler.ResetTeams();
         ChangeMenu(MainMenuRoom);
         Chat.localScale = on;
     }

@@ -27,17 +27,25 @@ public class TeamHandler : MonoBehaviour
         action = TeamRequestServerAnswer;
         ActionBlackBoard.AddData<Action<TeamRequestResult>>(DataKey.ACTION_TEAM_REQUEST, action);
 
-        UpdateSpectatorText();
+        ResetTeams();
     }
 
     void Update() 
     {
         if (shouldUpdate) 
         {
-            UpdateSpectatorText();
+            UpdateText();
             shouldUpdate = false;
         }
 
+    }
+
+    public void ResetTeams() 
+    {
+        whitePlayer = "";
+        blackPlayer = "";
+        spectatorList = new List<string>();
+        shouldUpdate = true;
     }
 
     public void TeamRequestServerAnswer(TeamRequestResult _TeamRequestResult)
@@ -168,7 +176,7 @@ public class TeamHandler : MonoBehaviour
         spectatorList.Remove(playerName);
     }
 
-    private void UpdateSpectatorText()
+    private void UpdateText()
     {
         string t1 = "";
         string t2 = "";
