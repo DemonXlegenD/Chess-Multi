@@ -11,6 +11,92 @@ using UnityEngine;
  *  - AI update calls (see UpdateAITurn and ChessAI class)
  */
 
+
+#region Enums
+public enum EPieceType : uint
+{
+    Pawn = 0,
+    King,
+    Queen,
+    Rook,
+    Knight,
+    Bishop,
+    NbPieces,
+    None
+}
+
+public enum EChessTeam
+{
+    White = 0,
+    Black,
+    None
+}
+
+public enum ETeamFlag : uint
+{
+    None = 1 << 0,
+    Friend = 1 << 1,
+    Enemy = 1 << 2
+}
+#endregion
+
+#region Structs & Classes
+public struct BoardSquare
+{
+    public EPieceType piece;
+    public EChessTeam team;
+
+    public BoardSquare(EPieceType p, EChessTeam t)
+    {
+        piece = p;
+        team = t;
+    }
+
+    static public BoardSquare Empty()
+    {
+        BoardSquare res;
+        res.piece = EPieceType.None;
+        res.team = EChessTeam.None;
+        return res;
+    }
+}
+
+[Serializable]
+public struct Move
+{
+    public int from;
+    public int to;
+
+    public override bool Equals(object o)
+    {
+        try
+        {
+            return (bool)(this == (Move)o);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public override int GetHashCode()
+    {
+        return from + to;
+    }
+
+    public static bool operator ==(Move move1, Move move2)
+    {
+        return move1.from == move2.from && move1.to == move2.to;
+    }
+
+    public static bool operator !=(Move move1, Move move2)
+    {
+        return move1.from != move2.from || move1.to != move2.to;
+    }
+}
+
+#endregion
+
 public partial class ChessGameManager : MonoBehaviour
 {
 
@@ -42,90 +128,8 @@ public partial class ChessGameManager : MonoBehaviour
     private Guid blackClientId = Guid.Empty;
     private Guid whiteClientId = Guid.Empty;
 
+    private bool needToUpdatePieces = false;
 
-    #region Enums
-    public enum EPieceType : uint
-    {
-        Pawn = 0,
-        King,
-        Queen,
-        Rook,
-        Knight,
-        Bishop,
-        NbPieces,
-        None
-    }
-
-    public enum EChessTeam
-    {
-        White = 0,
-        Black,
-        None
-    }
-
-    public enum ETeamFlag : uint
-    {
-        None = 1 << 0,
-        Friend = 1 << 1,
-        Enemy = 1 << 2
-    }
-    #endregion
-
-    #region Structs & Classes
-    public struct BoardSquare
-    {
-        public EPieceType piece;
-        public EChessTeam team;
-
-        public BoardSquare(EPieceType p, EChessTeam t)
-        {
-            piece = p;
-            team = t;
-        }
-
-        static public BoardSquare Empty()
-        {
-            BoardSquare res;
-            res.piece = EPieceType.None;
-            res.team = EChessTeam.None;
-            return res;
-        }
-    }
-
-    public struct Move
-    {
-        public int from;
-        public int to;
-
-        public override bool Equals(object o)
-        {
-            try
-            {
-                return (bool)(this == (Move)o);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public override int GetHashCode()
-        {
-            return from + to;
-        }
-
-        public static bool operator ==(Move move1, Move move2)
-        {
-            return move1.from == move2.from && move1.to == move2.to;
-        }
-
-        public static bool operator !=(Move move1, Move move2)
-        {
-            return move1.from != move2.from || move1.to != move2.to;
-        }
-    }
-
-    #endregion
 
     #region Chess Game Methods
 
@@ -168,6 +172,7 @@ public partial class ChessGameManager : MonoBehaviour
     {
         if (boardState.IsValidMove(teamTurn, move))
         {
+            needToUpdatePieces = true;
             BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
             if (result == BoardState.EMoveResult.Promotion)
             {
@@ -286,6 +291,7 @@ public partial class ChessGameManager : MonoBehaviour
     {
         currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
         ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
+        ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
 
         AskGameInfo();
 
@@ -340,6 +346,12 @@ public partial class ChessGameManager : MonoBehaviour
             else
             {
                 Watch();
+            }
+
+            if (needToUpdatePieces)
+            {
+                UpdatePieces();
+                needToUpdatePieces = false;
             }
         }
 
@@ -475,9 +487,20 @@ public partial class ChessGameManager : MonoBehaviour
                 move.from = startPos;
                 move.to = destPos;
 
-                PlayTurn(move);
+                if(boardState.IsValidMove(teamTurn, move))
+                {
 
-                UpdatePieces();
+                    Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+
+                    MoveData moveData = new MoveData(DataKey.ACTION_PLAY_MOVE);
+
+                    Package package = Package.CreatePackage(header, moveData);
+
+                    currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+
+                }
+
+            
             }
             else
             {
@@ -542,5 +565,33 @@ public class ChessInfoGameData : Data
 
         _info.AddValue("WhitePlayerId", WhitePlayerId);
         _info.AddValue("BlackPlayerId", BlackPlayerId);
+    }
+}
+
+[Serializable]
+public class MoveData : Data
+{
+    public Move Move;
+
+    public MoveData(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action<Move>>(ActionDataKey)?.Invoke(Move);
+    }
+
+    public MoveData(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+        Move = (Move)_info.GetValue("Move", typeof(Move));
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
+
+        _info.AddValue("Move", Move);
     }
 }
