@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using UnityEditor.Experimental.GraphView;
@@ -14,6 +16,8 @@ public class Server : MonoBehaviour
     [SerializeField] BlackBoard Data;
     [SerializeField] public string IpV4;
     [SerializeField] public int serverPort = 4269;
+
+    private bool isServerRunning = false;
 
     private static Guid Id = Guid.Empty;
     private static string Name = string.Empty;
@@ -33,23 +37,62 @@ public class Server : MonoBehaviour
     void Start()
     {
         Data.AddData<Server>(DataKey.SERVER, this);
-        serverThread = new Thread(new ThreadStart(SetupServer));
-        serverThread.Start();
+        StartServer();
     }
+
+
+    private void OnApplicationQuit()
+    {
+        foreach (var client in clients.Values)
+        {
+            client.Stream.Close();
+            client.TcpClient.Close();
+        }
+        server.Stop();
+        serverThread.Abort();
+    }
+
     #endregion
 
-    public string GetLocalIPAddress()
+    #region Server Method
+
+    public void StartServer()
     {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
+        serverThread = new Thread(SetupServer);
+        serverThread.Start();
+    }
+
+
+    public void StopServer()
+    {
+        isServerRunning = false;
+
+        //SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
+        SendDataToAllClients(ServerAction.DoAction(DataKey.ACTION_LEAVE_ROOM));
+
+        foreach (var client_info in clients.Values)
         {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            try
             {
-                Data.SetData(DataKey.SERVER_IP, ip.ToString());
-                return ip.ToString();
+                client_info.Stream?.Close();
+                client_info.TcpClient?.Close();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Erreur lors de la fermeture de la connexion pour le client {client_info.Id}: {ex.Message}");
             }
         }
-        throw new System.Exception("No network adapters with an IPv4 address in the system!");
+
+        clients.Clear();
+
+        if (server != null)
+        {
+            server.Stop(); // Close the TCPListener
+        }
+        if (serverThread != null && serverThread.IsAlive)
+        {
+            serverThread.Join(); // Waiting for the end of the thread
+        }
     }
 
     private void SetupServer()
@@ -65,25 +108,32 @@ public class Server : MonoBehaviour
             Name = $"Server-{Id}-{IpV4}-{serverPort}";
             Debug.Log("Server started : " + Name);
 
-            while (true)
+            isServerRunning = true;
+
+            while (isServerRunning)
             {
-                TcpClient client = server.AcceptTcpClient();
-
-                Guid clientId = Guid.NewGuid();
-                var clientInfo = new ClientInfo
+                //Check Clients Waiting To Connect
+                if (server.Pending())
                 {
-                    Id = clientId,
-                    TcpClient = client,
-                    Stream = client.GetStream(),
-                    ConnectionTimestamp = System.DateTime.Now.ToString()
-                };
+                    TcpClient client = server.AcceptTcpClient();
 
-                clients.Add(clientId, clientInfo);
+                    Guid clientId = Guid.NewGuid();
+                    var clientInfo = new ClientInfo
+                    {
+                        Id = clientId,
+                        TcpClient = client,
+                        Stream = client.GetStream(),
+                        ConnectionTimestamp = System.DateTime.Now.ToString()
+                    };
 
-                SendDataToAllClients(ServerConsole.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
+                    clients.Add(clientId, clientInfo);
 
-                Thread clientThread = new Thread(() => HandleClient(clientInfo));
-                clientThread.Start();
+                    SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
+
+                    Thread clientThread = new Thread(() => HandleClient(clientInfo));
+                    clientThread.Start();
+                }
+
             }
         }
         catch (SocketException e)
@@ -93,12 +143,27 @@ public class Server : MonoBehaviour
         finally
         {
             server.Stop();
+            Debug.Log("Server stopped.");
         }
     }
 
-    private void DisplayMessage(string message)
+
+
+    #endregion
+
+
+    public string GetLocalIPAddress()
     {
-        chat.AddMessage(message);
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                Data.SetData(DataKey.SERVER_IP, ip.ToString());
+                return ip.ToString();
+            }
+        }
+        throw new System.Exception("No network adapters with an IPv4 address in the system!");
     }
 
     private void HandleClient(ClientInfo clientInfo)
@@ -110,28 +175,57 @@ public class Server : MonoBehaviour
 
         try
         {
-            while ((stream.Read(buffer, 0, buffer.Length)) != 0)
+            while (isServerRunning && stream.CanRead)
             {
-                data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
+                int bytesRead;
+                try
+                {
+                    bytesRead = stream.Read(buffer, 0, buffer.Length);
+                }
+                catch (IOException e)
+                {
+                    Debug.Log("Client " + clientInfo.Id + " disconnected (IOException): " + e.Message);
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    Debug.Log("Client " + clientInfo.Id + " disconnected: Stream closed.");
+                    break;
+                }
+
+                if (bytesRead == 0) // 0 bytes read means the client has disconnected
+                {
+                    Debug.Log("Client " + clientInfo.Id + " disconnected (0 bytes read).");
+                    break;
+                }
+
+                data = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
-                SendToData(buffer, clientInfo.Id);
+                DataProcessing(buffer, clientInfo.Id);
             }
         }
         catch (SocketException e)
         {
-            Debug.Log("Client " + clientInfo.Id + " disconnected: " + e);
+            Debug.Log("Client " + clientInfo.Id + " disconnected (SocketException): " + e.Message);
         }
         finally
         {
+            // Ferme et nettoie la connexion client
             client.Close();
             clients.Remove(clientInfo.Id);
             Debug.Log("Client " + clientInfo.Id + " removed from the client list.");
-            SendDataToAllClients(ServerConsole.Log($"Client {clientInfo.Id} left the party"));
+
+            if (isServerRunning)
+            {
+                SendDataToAllClients(ServerAction.Log($"Client {clientInfo.Id} left the party"));
+            }
         }
     }
 
-    public void SendToData(byte[] _data, Guid _clientId)
+    #region Data
+
+    public void DataProcessing(byte[] _data, Guid _clientId)
     {
         Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
 
@@ -207,50 +301,35 @@ public class Server : MonoBehaviour
         }
     }
 
-    private void OnApplicationQuit()
-    {
-        foreach (var client in clients.Values)
-        {
-            client.Stream.Close();
-            client.TcpClient.Close();
-        }
-        server.Stop();
-        serverThread.Abort();
-    }
-
-    public void QuitServer()
-    {
-        //BroadcastMessageToClients(broadcastMessage); LEAVE ROOM TO MAIN MENUE
-        foreach (var client in clients.Values)
-        {
-            client.Stream.Close();
-            client.TcpClient.Close();
-        }
-        server.Stop();
-        serverThread.Abort();
-    }
-
-    #region Basic Message
-    public void SendMessageToClient(Guid clientId, string message)
-    {
-        if (clients.ContainsKey(clientId))
-        {
-            byte[] msg = Encoding.UTF8.GetBytes(message);
-            clients[clientId].Stream.Write(msg, 0, msg.Length);
-        }
-    }
-
-    #endregion
-
-    #region Data
 
     public void SendDataToClient(Guid _clientId, byte[] _data)
     {
         if (clients.ContainsKey(_clientId))
         {
-            clients[_clientId].Stream.Write(_data, 0, _data.Length);
+            var client = clients[_clientId];
+            if (client.Stream != null && client.Stream.CanWrite)
+            {
+                try
+                {
+                    client.Stream.Write(_data, 0, _data.Length);
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    Debug.LogError($"Erreur : Le flux pour le client {_clientId} est fermé.");
+                    // Gérer la déconnexion ici
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Erreur d'écriture : {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Le flux du client {_clientId} est déjà fermé ou inaccessible.");
+            }
         }
     }
+
 
     public void SendDataToAllClients(byte[] _data)
     {
@@ -260,28 +339,51 @@ public class Server : MonoBehaviour
         }
     }
 
-    public void BroadcastDataToAllClients(byte[] _data)
-    {
-        foreach (var client in clients.Values)
-        {
-            SendDataToClient(client.Id, _data);
-        }
-    }
-
     #endregion
 
-    public class ServerConsole
+
+    public class ServerAction
     {
-        static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS), new ChatMessage(string.Empty, SerializableColor.Red, DataKey.ACTION_CHAT));
+        static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS));
 
         public static byte[] Log(string _message)
         {
-            ChatMessage chat_message = (ChatMessage)package.Data;
-            chat_message.Content = _message;
+            ChatMessage chat_message = new ChatMessage(_message, SerializableColor.Red, DataKey.ACTION_CHAT);
+            package.Data = chat_message;
 
             return DataSerialize.SerializeToBytes(package);
         }
 
+        public static byte[] DoAction(DataKey data_key)
+        {
+            SimpleAction simple_action = new SimpleAction(data_key);
+            package.Data = simple_action;
+
+            return DataSerialize.SerializeToBytes(package);
+        }
+    }
+}
+
+[Serializable]
+public class SimpleAction : Data
+{
+    public SimpleAction(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action>(ActionDataKey)?.Invoke();
+    }
+
+    public SimpleAction(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
     }
 }
 
