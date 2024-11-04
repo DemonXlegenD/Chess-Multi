@@ -199,9 +199,6 @@ public partial class ChessGameManager : MonoBehaviour
         // raise event
         if (OnPlayerTurn != null)
             OnPlayerTurn(teamTurn == EChessTeam.White);
-
-        UpdatePieces();
-
     }
 
     // used to instantiate newly promoted queen
@@ -504,8 +501,10 @@ public partial class ChessGameManager : MonoBehaviour
                 if (boardState.IsValidMove(teamTurn, move))
                 {
                     AskToMove(move);
+                } else
+                {
+                    UpdatePieces();
                 }
-
             }
             else
             {
