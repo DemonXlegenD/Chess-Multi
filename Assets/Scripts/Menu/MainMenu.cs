@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 using UnityEngine;
 
 public class MainMenu : MonoBehaviour
@@ -193,6 +194,18 @@ public class ChessManagerRequest : Data
     }
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
-        throw new NotImplementedException();
+        _actionBlackBoard.GetValue<Action>(ActionDataKey)?.Invoke();
+    }
+
+
+
+    public ChessManagerRequest(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
     }
 }
