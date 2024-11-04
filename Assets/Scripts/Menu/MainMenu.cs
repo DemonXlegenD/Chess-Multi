@@ -94,6 +94,7 @@ public class MainMenu : MonoBehaviour
     public void StartGameAskByHost()
     {
         Debug.Log("Start Game!!!!");
+        GameManager.Instance.OnStartGame();
         ChangeMenu(InGamePanel);
     }
 
