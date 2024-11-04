@@ -88,8 +88,7 @@ public class MainMenu : MonoBehaviour
         {
             Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
 
-
-            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
             ChessManagerRequest request = new ChessManagerRequest(DataKey.ACTION_START_GAME_BY_HOST);
 
@@ -109,7 +108,6 @@ public class MainMenu : MonoBehaviour
     public void TryToConnect()
     {
         ChangeMenu(MainMenuConnectionFail);
-
         ProcessConnectClient(ConnectToIP.text);
     }
 

@@ -168,19 +168,6 @@ public class TeamHandler : MonoBehaviour
         spectatorList.Remove(playerName);
     }
 
-    private void LeaveCurrentTeam()
-    {
-        LeaveWhite(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-        LeaveBlack(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-        LeaveSpectator(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-    }
-
-    private void ResetTeams() 
-    {
-        whitePlayer = "";
-        blackPlayer = "";
-    }
-
     private void UpdateSpectatorText()
     {
         string t1 = "";

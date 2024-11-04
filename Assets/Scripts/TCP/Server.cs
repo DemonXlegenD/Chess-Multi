@@ -167,6 +167,13 @@ public class Server : MonoBehaviour
             case SendMethod.ONLY_SERVER:
                 Debug.Log("ONLY_SERVER");
                 HandleTeamRequest(package, _clientId, _data);
+                if (package.Data is ChessManagerRequest chess_manager_request)
+                {
+                    if(WhitePlayerID != Guid.Empty && BlackPlayerID != Guid.Empty) 
+                    {
+                        SendDataToAllClients(_data);
+                    }
+                }
                 break;
             case SendMethod.ONLY_SPECTATORS:
                 Debug.Log("Spectator");
@@ -209,6 +216,7 @@ public class Server : MonoBehaviour
             }
         }
     }
+
     private void OnApplicationQuit()
     {
         foreach (var client in clients.Values)
