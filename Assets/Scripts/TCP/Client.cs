@@ -89,6 +89,8 @@ public class Client : MonoBehaviour
         }
 
         Debug.LogWarning("Client connection closed.");
+
+        Destroy(this.gameObject);
     }
 
     #endregion

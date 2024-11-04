@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using UnityEditor.Experimental.GraphView;
@@ -66,7 +67,8 @@ public class Server : MonoBehaviour
     {
         isServerRunning = false;
 
-        SendDataToAllClients(ServerConsole.Log($"Server is shutting down"));
+        SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
+        SendDataToAllClients(ServerAction.DoAction(DataKey.ACTION_LEAVE_ROOM));
 
         foreach (var client_info in clients.Values)
         {
@@ -91,6 +93,7 @@ public class Server : MonoBehaviour
         {
             serverThread.Join(); // Waiting for the end of the thread
         }
+        Destroy(this.gameObject);
     }
 
     private void SetupServer()
@@ -126,7 +129,7 @@ public class Server : MonoBehaviour
 
                     clients.Add(clientId, clientInfo);
 
-                    SendDataToAllClients(ServerConsole.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
+                    SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
 
                     Thread clientThread = new Thread(() => HandleClient(clientInfo));
                     clientThread.Start();
@@ -216,7 +219,7 @@ public class Server : MonoBehaviour
 
             if (isServerRunning)
             {
-                SendDataToAllClients(ServerConsole.Log($"Client {clientInfo.Id} left the party"));
+                SendDataToAllClients(ServerAction.Log($"Client {clientInfo.Id} left the party"));
             }
         }
     }
@@ -340,18 +343,47 @@ public class Server : MonoBehaviour
     #endregion
 
 
-    public class ServerConsole
+    public class ServerAction
     {
-        static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS), new ChatMessage(string.Empty, SerializableColor.Red, DataKey.ACTION_CHAT));
+        static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS));
 
         public static byte[] Log(string _message)
         {
-            ChatMessage chat_message = (ChatMessage)package.Data;
-            chat_message.Content = _message;
+            ChatMessage chat_message = new ChatMessage(_message, SerializableColor.Red, DataKey.ACTION_CHAT);
+            package.Data = chat_message;
 
             return DataSerialize.SerializeToBytes(package);
         }
 
+        public static byte[] DoAction(DataKey data_key)
+        {
+            SimpleAction chat_message = new SimpleAction(data_key);
+
+            return DataSerialize.SerializeToBytes(package);
+        }
+    }
+}
+
+[Serializable]
+public class SimpleAction : Data
+{
+    public SimpleAction(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action>(ActionDataKey)?.Invoke();
+    }
+
+    public SimpleAction(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
     }
 }
 

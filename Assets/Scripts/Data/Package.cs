@@ -11,6 +11,13 @@ public struct Package : IHeader, IData, ISerializable
 
     public Data Data { get; set; }
 
+    #region Constructor
+    public Package(Header _header)
+    {
+        this.Header = _header;
+        this.Data = null;
+    }
+
     public Package(Header _header, Data _data)
     {
         this.Header = _header;
@@ -22,6 +29,8 @@ public struct Package : IHeader, IData, ISerializable
         this.Header = (Header)_info.GetValue("Header", typeof(Header)); ;
         this.Data = (Data)_info.GetValue("Data", typeof(Data));
     }
+
+    #endregion
 
     public static Package CreatePackage(Header _header, Data _data)
     {

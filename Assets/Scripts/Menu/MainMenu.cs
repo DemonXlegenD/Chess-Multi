@@ -30,6 +30,8 @@ public class MainMenu : MonoBehaviour
     void Start()
     {
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, LeaveRoom);
+
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
 
@@ -69,13 +71,9 @@ public class MainMenu : MonoBehaviour
 
     public void LeaveRoom()
     {
-        client.CloseClient();
-        Destroy(client.gameObject);
-
-        if (Data.GetValue<bool>(DataKey.IS_HOST))
+        if (Data.GetValue<bool>(DataKey.IS_HOST) && server != null)
         {
             server.StopServer();
-            Destroy(server.gameObject);
         }
 
         ChangeMenu(MainMenuStart);
