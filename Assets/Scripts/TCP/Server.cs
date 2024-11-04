@@ -177,7 +177,7 @@ public class Server : MonoBehaviour
         }
     }
 
-    private void HandleTeamRequest(_package, _clientId, _data) 
+    private void HandleTeamRequest(Package _package, Guid _clientId, byte[] _data) 
     {
         if (_package.Data is TeamRequest team_request)
         {
