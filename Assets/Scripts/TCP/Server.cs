@@ -147,10 +147,7 @@ public class Server : MonoBehaviour
         }
     }
 
-
-
     #endregion
-
 
     public string GetLocalIPAddress()
     {
@@ -311,17 +308,6 @@ public class Server : MonoBehaviour
         }
     }
 
-    private void OnApplicationQuit()
-    {
-        foreach (var client in clients.Values)
-        {
-            client.Stream.Close();
-            client.TcpClient.Close();
-        }
-        server.Stop();
-        serverThread.Abort();
-    }
-
     public void QuitServer()
     {
         //BroadcastMessageToClients(broadcastMessage); LEAVE ROOM TO MAIN MENUE
@@ -334,6 +320,7 @@ public class Server : MonoBehaviour
         serverThread.Abort();
     }
 
+    #endregion
     #region Basic Message
     public void SendMessageToClient(Guid clientId, string message)
     {
@@ -343,10 +330,6 @@ public class Server : MonoBehaviour
             clients[clientId].Stream.Write(msg, 0, msg.Length);
         }
     }
-
-    #endregion
-
-    #region Data
 
     public void SendDataToClient(Guid _clientId, byte[] _data)
     {
@@ -376,7 +359,6 @@ public class Server : MonoBehaviour
         }
     }
 
-
     public void SendDataToAllClients(byte[] _data)
     {
         foreach (var client in clients.Values)
@@ -386,7 +368,6 @@ public class Server : MonoBehaviour
     }
 
     #endregion
-
 
     public class ServerAction
     {
