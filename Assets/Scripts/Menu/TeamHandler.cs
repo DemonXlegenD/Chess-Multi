@@ -160,21 +160,12 @@ public class TeamHandler : MonoBehaviour
 
     private void JoinSpectator(string playerName)
     {
-        Debug.Log(playerName);
-        if (!Data.GetValue<bool>(DataKey.IS_SPECTATOR))
-        {
-            Data.SetData(DataKey.IS_SPECTATOR, true);
-            spectatorList.Add(playerName);
-        }
+        spectatorList.Add(playerName);
     }
 
     private void LeaveSpectator(string playerName)
     {
-        if (Data.GetValue<bool>(DataKey.IS_SPECTATOR))
-        {
-            Data.SetData(DataKey.IS_SPECTATOR, false);
-            spectatorList.Remove(playerName);
-        }
+        spectatorList.Remove(playerName);
     }
 
     private void LeaveCurrentTeam()

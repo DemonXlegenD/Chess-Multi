@@ -99,15 +99,12 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-
     public void StartGameAskByHost()
     {
         Debug.Log("Start Game!!!!");
         Data.GetValue<GameManager>(DataKey.GAME_MANAGER).OnStartGame();
         wantGamePanel = true;
     }
-
-
 
     public void TryToConnect()
     {
@@ -207,8 +204,6 @@ public class ChessManagerRequest : Data
     {
         _actionBlackBoard.GetValue<Action>(ActionDataKey)?.Invoke();
     }
-
-
 
     public ChessManagerRequest(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
     {

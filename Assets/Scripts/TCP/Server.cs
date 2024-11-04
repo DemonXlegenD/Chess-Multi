@@ -170,13 +170,12 @@ public class Server : MonoBehaviour
                 {
                     if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
                     {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty)
+                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
                         {
-                            Debug.Log("join");
                             WhitePlayerID = _clientId;
                             SendDataToAllClients(_data);
                         }
-                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty)
+                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
                         {
                             BlackPlayerID = _clientId;
                             SendDataToAllClients(_data);
