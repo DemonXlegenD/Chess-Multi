@@ -268,7 +268,7 @@ public partial class ChessGameManager : MonoBehaviour
         currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
     }
 
-    private void SetGameInfo(Guid black_player_id, Guid white_player_id)
+    private void SetGameInfo(Guid white_player_id, Guid black_player_id)
     {
         blackClientId = black_player_id;
         whiteClientId = white_player_id;
