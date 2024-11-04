@@ -144,7 +144,6 @@ public class TeamHandler : MonoBehaviour
     private void JoinSpectator(string playerName)
     {
         Debug.Log(playerName);
-        LeaveCurrentTeam();
         if (!Data.GetValue<bool>(DataKey.IS_SPECTATOR))
         {
             Data.SetData(DataKey.IS_SPECTATOR, true);
