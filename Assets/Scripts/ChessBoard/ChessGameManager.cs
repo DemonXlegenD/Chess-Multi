@@ -128,7 +128,7 @@ public partial class ChessGameManager : MonoBehaviour
     private Guid blackClientId = Guid.Empty;
     private Guid whiteClientId = Guid.Empty;
 
-    private bool needToUpdatePieces = false;
+    [SerializeField]  private bool needToUpdatePieces = false;
 
 
     #region Chess Game Methods
