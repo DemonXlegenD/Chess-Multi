@@ -27,15 +27,26 @@ public class Client : MonoBehaviour
     private Thread clientReceiveThread;
     private bool isListening = false;
 
+    #region MonoBehaviours
+
     private void Start()
     {
         Data.AddData<Client>(DataKey.CLIENT, this);
         ActionBlackBoard.AddData<Action<Guid>>(DataKey.ACTION_SET_ID, SetId);
     }
 
-    void Update()
+    private void Update()
     {
     }
+
+    private void OnApplicationQuit()
+    {
+        CloseClient();
+    }
+
+    #endregion
+
+    #region Setter
 
     public void SetId(Guid id)
     {
@@ -46,22 +57,43 @@ public class Client : MonoBehaviour
     {
         IpServer = ip_;
         Data.SetData(DataKey.SERVER_IP, IpServer);
-      
     }
 
-    public void SendPackageId()
+    #endregion
+
+    #region Manager Client
+
+    public void StartRunningClient()
     {
-
-        Header header = new Header(id, Pseudo, DateTime.Now, SendMethod.ONLY_CLIENT);
-
-        IdRequest idRequest = new IdRequest(DataKey.ACTION_SET_ID);
-
-        Package package = new Package(header, idRequest);
-
-        Debug.Log(package);
-
-        SendDataToServer(DataSerialize.SerializeToBytes(package));
+        clientReceiveThread = new Thread(ListenForData)
+        {
+            IsBackground = true
+        };
+        clientReceiveThread.Start();
     }
+
+    public void CloseClient()
+    {
+        isListening = false;
+
+        if (stream != null)
+        {
+            stream.Close();
+            stream = null;
+        }
+
+        if (client != null)
+        {
+            client.Close();
+            client = null;
+        }
+
+        Debug.LogWarning("Client connection closed.");
+    }
+
+    #endregion
+
+    #region Client Method
 
     public bool ConnectToServer()
     {
@@ -72,11 +104,7 @@ public class Client : MonoBehaviour
             SendPackageId();
             isListening = true;
 
-            clientReceiveThread = new Thread(new ThreadStart(ListenForData))
-            {
-                IsBackground = true
-            };
-            clientReceiveThread.Start();
+            StartRunningClient();
 
             return true;
         }
@@ -89,46 +117,60 @@ public class Client : MonoBehaviour
 
     private void ListenForData()
     {
+        byte[] buffer = new byte[1024];
+
         try
         {
-            byte[] bytes = new byte[1024];
             while (isListening && stream.CanRead)
             {
                 if (stream.DataAvailable)
                 {
-                    int length;
-                    try
+                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+                    if (bytesRead > 0)
                     {
-                        while ((length = stream.Read(bytes, 0, bytes.Length)) != 0)
-                        {
-                            var incomingData = new byte[length];
-                            Array.Copy(bytes, 0, incomingData, 0, length);
+                        byte[] incomingData = new byte[bytesRead];
+                        Array.Copy(buffer, 0, incomingData, 0, bytesRead);
 
-                            DataProcessing(incomingData);
+                        DataProcessing(incomingData);
 
-                            string serverMessage = Encoding.UTF8.GetString(incomingData);
-                            Debug.Log("Server message received: " + serverMessage);
-                        }
+                        string serverMessage = Encoding.UTF8.GetString(incomingData);
+                        Debug.Log("Server message received: " + serverMessage);
                     }
-                    catch (IOException ioException)
+                    else
                     {
-                        Debug.LogWarning("Stream read interrupted: " + ioException.Message);
-                        break; // Sortir de la boucle si le stream est interrompu
+                        Debug.LogWarning("Server closed the connection.");
+                        break;
                     }
                 }
             }
         }
+        catch (IOException ioException)
+        {
+            Debug.LogWarning("IOException during data reception: " + ioException.Message);
+        }
         catch (SocketException socketException)
         {
-            Debug.Log("Socket exception: " + socketException);
+            Debug.Log("SocketException: " + socketException.Message);
         }
         finally
         {
-            if (stream != null)
-                stream.Close();
-            if (client != null)
-                client.Close();
+            CloseClient();
         }
+    }
+
+    #endregion
+
+    #region Data
+
+    public void SendPackageId()
+    {
+        Header header = new Header(id, Pseudo, DateTime.Now, SendMethod.ONLY_CLIENT);
+        IdRequest idRequest = new IdRequest(DataKey.ACTION_SET_ID);
+
+        Package package = new Package(header, idRequest);
+
+        SendDataToServer(DataSerialize.SerializeToBytes(package));
     }
 
     public void DataProcessing(byte[] _data)
@@ -169,31 +211,7 @@ public class Client : MonoBehaviour
         stream.Write(data, 0, data.Length);
     }
 
-    public void StopListening()
-    {
-        isListening = false;
-        //clientReceiveThread?.Join();
-    }
-
-    public void QuitClient()
-    {
-        StopListening();
-        if (stream != null)
-            stream.Close();
-        if (client != null)
-            client.Close();
-    }
-
-    void OnApplicationQuit()
-    {
-        StopListening();
-        if (stream != null)
-            stream.Close();
-        if (client != null)
-            client.Close();
-        if (clientReceiveThread != null)
-            clientReceiveThread.Abort();
-    }
+    #endregion
 }
 
 [Serializable]

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -172,9 +173,31 @@ public class Server : MonoBehaviour
 
         try
         {
-            while ((stream.Read(buffer, 0, buffer.Length)) != 0)
+            while (isServerRunning && stream.CanRead)
             {
-                data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
+                int bytesRead;
+                try
+                {
+                    bytesRead = stream.Read(buffer, 0, buffer.Length);
+                }
+                catch (IOException e)
+                {
+                    Debug.Log("Client " + clientInfo.Id + " disconnected (IOException): " + e.Message);
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    Debug.Log("Client " + clientInfo.Id + " disconnected: Stream closed.");
+                    break;
+                }
+
+                if (bytesRead == 0) // 0 bytes read means the client has disconnected
+                {
+                    Debug.Log("Client " + clientInfo.Id + " disconnected (0 bytes read).");
+                    break;
+                }
+
+                data = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
                 DataProcessing(buffer, clientInfo.Id);
@@ -182,14 +205,19 @@ public class Server : MonoBehaviour
         }
         catch (SocketException e)
         {
-            Debug.Log("Client " + clientInfo.Id + " disconnected: " + e);
+            Debug.Log("Client " + clientInfo.Id + " disconnected (SocketException): " + e.Message);
         }
         finally
         {
+            // Ferme et nettoie la connexion client
             client.Close();
             clients.Remove(clientInfo.Id);
             Debug.Log("Client " + clientInfo.Id + " removed from the client list.");
-            if(isServerRunning) SendDataToAllClients(ServerConsole.Log($"Client {clientInfo.Id} left the party"));
+
+            if (isServerRunning)
+            {
+                SendDataToAllClients(ServerConsole.Log($"Client {clientInfo.Id} left the party"));
+            }
         }
     }
 

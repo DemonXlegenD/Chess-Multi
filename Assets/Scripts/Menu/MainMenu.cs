@@ -69,7 +69,7 @@ public class MainMenu : MonoBehaviour
 
     public void LeaveRoom()
     {
-        client.QuitClient();
+        client.CloseClient();
         Destroy(client.gameObject);
 
         if (Data.GetValue<bool>(DataKey.IS_HOST))
@@ -158,7 +158,7 @@ public class MainMenu : MonoBehaviour
     public void FailToConnect()
     {
         Data.SetData(DataKey.IS_HOST, false);
-        client.QuitClient();
+        client.CloseClient();
         Destroy(client.gameObject);
 
         ChangeMenu(MainMenuConnectionFail);
