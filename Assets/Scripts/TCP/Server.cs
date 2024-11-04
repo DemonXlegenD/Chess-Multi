@@ -143,16 +143,21 @@ public class Server : MonoBehaviour
             case SendMethod.ONLY_CLIENT:
                 if (package.Data is IdRequest id_request)
                 {
+                    Debug.Log(_clientId);
                     id_request.Id = _clientId;
+                    package.Data = id_request;
+                    _data = DataSerialize.SerializeToBytes(package);
+                    Debug.Log(package.Data);
                 }
 
                 if (package.Data is ChessInfoGameData chess_info_game_data)
                 {
                     chess_info_game_data.BlackPlayerId = BlackPlayerID;
                     chess_info_game_data.WhitePlayerId = WhitePlayerID;
+                    package.Data = chess_info_game_data;
+                    _data = DataSerialize.SerializeToBytes(package);
                 }
 
-                _data = DataSerialize.SerializeToBytes(package);
                 SendDataToClient(_clientId, _data);
                 Debug.Log("Only client");
                 break;
