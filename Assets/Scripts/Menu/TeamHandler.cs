@@ -12,7 +12,10 @@ public class TeamHandler : MonoBehaviour
     [SerializeField] BlackBoard Data;
     [SerializeField] private BlackBoard ActionBlackBoard;
 
+    private bool shouldUpdate = false;
     private List<string> spectatorList = new List<string>();
+    private string whitePlayer = "";
+    private string blackPlayer = "";
     public Action<TeamRequestResult> action;
 
     void Start()
@@ -25,6 +28,16 @@ public class TeamHandler : MonoBehaviour
         ActionBlackBoard.AddData<Action<TeamRequestResult>>(DataKey.ACTION_TEAM_REQUEST, action);
 
         UpdateSpectatorText();
+    }
+
+    void Update() 
+    {
+        if (shouldUpdate) 
+        {
+            UpdateSpectatorText();
+            shouldUpdate = false;
+        }
+
     }
 
     public void TeamRequestServerAnswer(TeamRequestResult _TeamRequestResult)
@@ -120,78 +133,63 @@ public class TeamHandler : MonoBehaviour
     private void JoinWhite(string playerName)
     {
         LeaveSpectator(playerName);
-        WhiteTeamPlayer.text = playerName;
+        whitePlayer = playerName;
+        shouldUpdate = true;
     }
 
     private void JoinBlack(string playerName)
     {
         LeaveSpectator(playerName);
-        BlackTeamPlayer.text = playerName; 
+        blackPlayer = playerName; 
+        shouldUpdate = true;
     }
 
     private void LeaveWhite(string playerName)
     {
-        WhiteTeamPlayer.text = "";
+        whitePlayer = "";
         JoinSpectator(playerName);
+        shouldUpdate = true;
     }
 
     private void LeaveBlack(string playerName)
     {
-        BlackTeamPlayer.text = "";
+        blackPlayer = "";
         JoinSpectator(playerName);
+        shouldUpdate = true;
     }
 
     private void JoinSpectator(string playerName)
     {
-        Debug.Log(playerName);
-        if (!Data.GetValue<bool>(DataKey.IS_SPECTATOR))
-        {
-            Data.SetData(DataKey.IS_SPECTATOR, true);
-            spectatorList.Add(playerName);
-            UpdateSpectatorText();
-        }
+        spectatorList.Add(playerName);
     }
 
     private void LeaveSpectator(string playerName)
     {
-        if (Data.GetValue<bool>(DataKey.IS_SPECTATOR))
-        {
-            Data.SetData(DataKey.IS_SPECTATOR, false);
-            spectatorList.Remove(playerName);
-            UpdateSpectatorText();
-        }
-    }
-
-    private void LeaveCurrentTeam()
-    {
-        LeaveWhite(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-        LeaveBlack(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-        LeaveSpectator(Data.GetValue<string>(DataKey.PLAYER_NICKNAME));
-    }
-
-    private void ResetTeams() 
-    {
-        WhiteTeamPlayer.text = "";
-        BlackTeamPlayer.text = "";
-        UpdateSpectatorText();
+        spectatorList.Remove(playerName);
     }
 
     private void UpdateSpectatorText()
     {
-        SpectatorTeamPlayersOne.text = "";
-        SpectatorTeamPlayersTwo.text = "";
+        string t1 = "";
+        string t2 = "";
 
         for (int i = 0; i < spectatorList.Count; i++)
         {
             if (i % 2 == 0)
             {
-                SpectatorTeamPlayersOne.text += spectatorList[i] + "\n";
+                t1 += spectatorList[i] + "\n";
             }
             else
             {
-                SpectatorTeamPlayersTwo.text += spectatorList[i] + "\n";
+                t2 += spectatorList[i] + "\n";
             }
         }
+
+        WhiteTeamPlayer.text = whitePlayer;
+        BlackTeamPlayer.text = blackPlayer;
+
+        SpectatorTeamPlayersOne.text = t1;
+        SpectatorTeamPlayersTwo.text = t2;
     }
 }
 

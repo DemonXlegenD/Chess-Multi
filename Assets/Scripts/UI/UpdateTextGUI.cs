@@ -6,6 +6,7 @@ public class UpdateTextGUI : MonoBehaviour
 {
     private TMPro.TextMeshProUGUI textGUI;
     public bool ShouldUpdate = false;
+    public string oldText = "";
 
     void Start()
     {
@@ -14,16 +15,10 @@ public class UpdateTextGUI : MonoBehaviour
 
     void Update()
     {
-        if (textGUI.text != "" && ShouldUpdate) 
+        if (textGUI.text != oldText) 
         {
             textGUI.ForceMeshUpdate();
-            ShouldUpdate = false;
-        }
-
-        if (textGUI.text == "" && !ShouldUpdate)
-        {
-            textGUI.ForceMeshUpdate();
-            ShouldUpdate = true;
+            oldText = textGUI.text;
         }
     }
 }

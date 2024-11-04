@@ -106,8 +106,7 @@ public class MainMenu : MonoBehaviour
         {
             Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
 
-
-            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
             ChessManagerRequest request = new ChessManagerRequest(DataKey.ACTION_START_GAME_BY_HOST);
 
@@ -117,7 +116,6 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-
     public void StartGameAskByHost()
     {
         Debug.Log("Start Game!!!!");
@@ -125,12 +123,9 @@ public class MainMenu : MonoBehaviour
         wantGamePanel = true;
     }
 
-
-
     public void TryToConnect()
     {
         ChangeMenu(MainMenuConnectionFail);
-
         ProcessConnectClient(ConnectToIP.text);
     }
 
@@ -225,8 +220,6 @@ public class ChessManagerRequest : Data
     {
         _actionBlackBoard.GetValue<Action>(ActionDataKey)?.Invoke();
     }
-
-
 
     public ChessManagerRequest(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
     {

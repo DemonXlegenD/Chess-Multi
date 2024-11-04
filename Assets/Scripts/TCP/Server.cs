@@ -260,35 +260,12 @@ public class Server : MonoBehaviour
                 break;
             case SendMethod.ONLY_SERVER:
                 Debug.Log("ONLY_SERVER");
-                if (package.Data is TeamRequest team_request)
+                HandleTeamRequest(package, _clientId, _data);
+                if (package.Data is ChessManagerRequest chess_manager_request)
                 {
-                    if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
+                    if(WhitePlayerID != Guid.Empty && BlackPlayerID != Guid.Empty) 
                     {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty)
-                        {
-                            Debug.Log("join");
-                            WhitePlayerID = _clientId;
-                            SendDataToAllClients(_data);
-                        }
-                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty)
-                        {
-                            BlackPlayerID = _clientId;
-                            SendDataToAllClients(_data);
-                        }
-                    }
-                    else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE)
-                    {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
-                        {
-                            Debug.Log("leave");
-                            WhitePlayerID = Guid.Empty;
-                            SendDataToAllClients(_data);
-                        }
-                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
-                        {
-                            BlackPlayerID = Guid.Empty;
-                            SendDataToAllClients(_data);
-                        }
+                        SendDataToAllClients(_data);
                     }
                 }
                 break;
@@ -301,6 +278,75 @@ public class Server : MonoBehaviour
         }
     }
 
+    private void HandleTeamRequest(Package _package, Guid _clientId, byte[] _data) 
+    {
+        if (_package.Data is TeamRequest team_request)
+        {
+            if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
+            {
+                if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
+                {
+                    WhitePlayerID = _clientId;
+                    SendDataToAllClients(_data);
+                }
+                else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
+                {
+                    BlackPlayerID = _clientId;
+                    SendDataToAllClients(_data);
+                }
+            }
+            else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE)
+            {
+                if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
+                {
+                    WhitePlayerID = Guid.Empty;
+                    SendDataToAllClients(_data);
+                }
+                else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
+                {
+                    BlackPlayerID = Guid.Empty;
+                    SendDataToAllClients(_data);
+                }
+            }
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        foreach (var client in clients.Values)
+        {
+            client.Stream.Close();
+            client.TcpClient.Close();
+        }
+        server.Stop();
+        serverThread.Abort();
+    }
+
+    public void QuitServer()
+    {
+        //BroadcastMessageToClients(broadcastMessage); LEAVE ROOM TO MAIN MENUE
+        foreach (var client in clients.Values)
+        {
+            client.Stream.Close();
+            client.TcpClient.Close();
+        }
+        server.Stop();
+        serverThread.Abort();
+    }
+
+    #region Basic Message
+    public void SendMessageToClient(Guid clientId, string message)
+    {
+        if (clients.ContainsKey(clientId))
+        {
+            byte[] msg = Encoding.UTF8.GetBytes(message);
+            clients[clientId].Stream.Write(msg, 0, msg.Length);
+        }
+    }
+
+    #endregion
+
+    #region Data
 
     public void SendDataToClient(Guid _clientId, byte[] _data)
     {
@@ -315,17 +361,17 @@ public class Server : MonoBehaviour
                 }
                 catch (ObjectDisposedException ex)
                 {
-                    Debug.LogError($"Erreur : Le flux pour le client {_clientId} est fermé.");
-                    // Gérer la déconnexion ici
+                    Debug.LogError($"Erreur : Le flux pour le client {_clientId} est fermï¿½.");
+                    // Gï¿½rer la dï¿½connexion ici
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"Erreur d'écriture : {ex.Message}");
+                    Debug.LogError($"Erreur d'ï¿½criture : {ex.Message}");
                 }
             }
             else
             {
-                Debug.LogWarning($"Le flux du client {_clientId} est déjà fermé ou inaccessible.");
+                Debug.LogWarning($"Le flux du client {_clientId} est dï¿½jï¿½ fermï¿½ ou inaccessible.");
             }
         }
     }
