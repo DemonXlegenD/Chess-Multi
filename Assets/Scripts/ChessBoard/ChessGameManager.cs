@@ -128,7 +128,7 @@ public partial class ChessGameManager : MonoBehaviour
     private Guid blackClientId = Guid.Empty;
     private Guid whiteClientId = Guid.Empty;
 
-    [SerializeField]  private bool needToUpdatePieces = false;
+    [SerializeField] private bool needToUpdatePieces = false;
 
 
     #region Chess Game Methods
@@ -170,37 +170,35 @@ public partial class ChessGameManager : MonoBehaviour
 
     public void PlayTurn(Move move)
     {
-        if (boardState.IsValidMove(teamTurn, move))
+        needToUpdatePieces = true;
+        BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
+        if (result == BoardState.EMoveResult.Promotion)
         {
-            needToUpdatePieces = true;
-            BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
-            if (result == BoardState.EMoveResult.Promotion)
-            {
-                // instantiate promoted queen gameobject
-                AddQueenAtPos(move.to);
-            }
-
-            EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
-            if (boardState.DoesTeamLose(otherTeam))
-            {
-                // increase score and reset board
-                scores[(int)teamTurn]++;
-                if (OnScoreUpdated != null)
-                    OnScoreUpdated(scores[0], scores[1]);
-
-                PrepareGame(false);
-                // remove extra piece instances if pawn promotions occured
-                teamPiecesArray[0].ClearPromotedPieces();
-                teamPiecesArray[1].ClearPromotedPieces();
-            }
-            else
-            {
-                teamTurn = otherTeam;
-            }
-            // raise event
-            if (OnPlayerTurn != null)
-                OnPlayerTurn(teamTurn == EChessTeam.White);
+            // instantiate promoted queen gameobject
+            AddQueenAtPos(move.to);
         }
+
+        EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
+        if (boardState.DoesTeamLose(otherTeam))
+        {
+            // increase score and reset board
+            scores[(int)teamTurn]++;
+            if (OnScoreUpdated != null)
+                OnScoreUpdated(scores[0], scores[1]);
+
+            PrepareGame(false);
+            // remove extra piece instances if pawn promotions occured
+            teamPiecesArray[0].ClearPromotedPieces();
+            teamPiecesArray[1].ClearPromotedPieces();
+        }
+        else
+        {
+            teamTurn = otherTeam;
+        }
+        // raise event
+        if (OnPlayerTurn != null)
+            OnPlayerTurn(teamTurn == EChessTeam.White);
+
     }
 
     // used to instantiate newly promoted queen
@@ -257,8 +255,9 @@ public partial class ChessGameManager : MonoBehaviour
 
     private bool IsGameInfoReady()
     {
-        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty) {
-            return true; 
+        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty)
+        {
+            return true;
         }
         return false;
     }
@@ -323,7 +322,7 @@ public partial class ChessGameManager : MonoBehaviour
         {
             if (teamTurn == EChessTeam.White)
             {
-                Debug.Log("Current Client ID : " +currentClient.Id);
+                Debug.Log("Current Client ID : " + currentClient.Id);
                 Debug.Log("Xhite Client ID : " + whiteClientId);
                 if (currentClient.Id == whiteClientId)
                 {
@@ -487,7 +486,7 @@ public partial class ChessGameManager : MonoBehaviour
                 move.from = startPos;
                 move.to = destPos;
 
-                if(boardState.IsValidMove(teamTurn, move))
+                if (boardState.IsValidMove(teamTurn, move))
                 {
 
                     Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
@@ -500,7 +499,7 @@ public partial class ChessGameManager : MonoBehaviour
 
                 }
 
-            
+
             }
             else
             {
