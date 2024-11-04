@@ -8,12 +8,17 @@ public enum DataKey
     ACTION_CHAT,
     ACTION_SET_ID,
     ACTION_TEAM_REQUEST,
+    ACTION_START_GAME_BY_HOST,
+
+
     PLAYER_NICKNAME,
     SERVER_IP,
     IS_HOST,
     IS_WHITE,
     IS_BLACK,
     IS_SPECTATOR,
+    SERVER,
+    CLIENT,
 }
 
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/BlackBoard", order = 1)]

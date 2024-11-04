@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,6 +16,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] Server ServerPrefab;
     [SerializeField] Client ClientPrefab;
     [SerializeField] BlackBoard Data;
+    [SerializeField] BlackBoard ActionBlackBoard;
     [SerializeField] TMPro.TMP_InputField NickName;
     [SerializeField] TMPro.TMP_InputField ConnectToIP;
     [SerializeField] TMPro.TextMeshProUGUI IP;
@@ -27,6 +29,7 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
         
@@ -74,9 +77,27 @@ public class MainMenu : MonoBehaviour
     {
         if (Data.GetValue<bool>(DataKey.IS_HOST)) 
         {
-            ChangeMenu(InGamePanel);
+            Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
+
+
+            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+
+            ChessManagerRequest request = new ChessManagerRequest(DataKey.ACTION_START_GAME_BY_HOST);
+
+            Package package = Package.CreatePackage(header, request);
+
+            current_client.SendDataToServer(DataSerialize.SerializeToBytes(package));
         }
     }
+
+
+    public void StartGameAskByHost()
+    {
+        Debug.Log("Start Game!!!!");
+        ChangeMenu(InGamePanel);
+    }
+
+
 
     public void TryToConnect() 
     {
@@ -160,5 +181,17 @@ public class MainMenu : MonoBehaviour
         currentMenu.localScale = off;
         currentMenu = menuToDisplay;
         currentMenu.localScale = on;
+    }
+}
+
+public class ChessManagerRequest : Data
+{
+     public ChessManagerRequest(DataKey _actionDataKey) : base(_actionDataKey)
+        {
+
+    }
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        throw new NotImplementedException();
     }
 }

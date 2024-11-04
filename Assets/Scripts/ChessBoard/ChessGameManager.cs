@@ -1,5 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 /*
  * This singleton manages the whole chess game
@@ -14,7 +15,8 @@ public partial class ChessGameManager : MonoBehaviour
 
     #region Singleton
     static ChessGameManager instance = null;
-    public static ChessGameManager Instance {
+    public static ChessGameManager Instance
+    {
         get
         {
             if (instance == null)
@@ -25,13 +27,19 @@ public partial class ChessGameManager : MonoBehaviour
     #endregion
 
     [SerializeField]
-    private bool isAIEnabled = true;
+    private bool isAIEnabled = false;
+    [SerializeField] private BlackBoard blackBoard;
 
     private ChessAI chessAI = null;
     private Transform boardTransform = null;
     private static int BOARD_SIZE = 8;
     private int pieceLayerMask;
     private int boardLayerMask;
+
+    private Client currentClient;
+    private Guid blackClientId;
+    private Guid whiteClientId;
+
 
     #region Enums
     public enum EPieceType : uint
@@ -246,6 +254,10 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Start()
     {
+        currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
+        whiteClientId = blackBoard.GetValue<Server>(DataKey.SERVER).GetWhitePlayerID();
+        blackClientId = blackBoard.GetValue<Server>(DataKey.SERVER).GetBlackPlayerID();
+
         pieceLayerMask = 1 << LayerMask.NameToLayer("Piece");
         boardLayerMask = 1 << LayerMask.NameToLayer("Board");
 
@@ -270,14 +282,28 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Update()
     {
-        // human player always plays white
         if (teamTurn == EChessTeam.White)
-            UpdatePlayerTurn();
-        // AI plays black
+        { 
+            if (currentClient.Id == whiteClientId){
+                Debug.Log(currentClient.Pseudo);
+                UpdatePlayerTurn();
+            }
+        }
+        else if (teamTurn == EChessTeam.Black)
+        { 
+            if (currentClient.Id == blackClientId){
+                Debug.Log(currentClient.Pseudo);
+                UpdatePlayerTurn(); 
+            }
+        }
         else if (isAIEnabled)
-            UpdateAITurn();
+        { 
+            UpdateAITurn(); 
+        }
         else
-            UpdatePlayerTurn();
+        { 
+            Watch(); 
+        }
     }
     #endregion
 
@@ -370,6 +396,11 @@ public partial class ChessGameManager : MonoBehaviour
     float maxDistance = 100f;
     int startPos = 0;
     int destPos = 0;
+
+    private void Watch()
+    {
+
+    }
 
     void UpdateAITurn()
     {
