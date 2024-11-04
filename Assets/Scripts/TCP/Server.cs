@@ -166,36 +166,7 @@ public class Server : MonoBehaviour
                 break;
             case SendMethod.ONLY_SERVER:
                 Debug.Log("ONLY_SERVER");
-                if (package.Data is TeamRequest team_request)
-                {
-                    if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
-                    {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
-                        {
-                            WhitePlayerID = _clientId;
-                            SendDataToAllClients(_data);
-                        }
-                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
-                        {
-                            BlackPlayerID = _clientId;
-                            SendDataToAllClients(_data);
-                        }
-                    }
-                    else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE)
-                    {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
-                        {
-                            Debug.Log("leave");
-                            WhitePlayerID = Guid.Empty;
-                            SendDataToAllClients(_data);
-                        }
-                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
-                        {
-                            BlackPlayerID = Guid.Empty;
-                            SendDataToAllClients(_data);
-                        }
-                    }
-                }
+                HandleTeamRequest(package, _clientId, _data);
                 break;
             case SendMethod.ONLY_SPECTATORS:
                 Debug.Log("Spectator");
@@ -206,6 +177,38 @@ public class Server : MonoBehaviour
         }
     }
 
+    private void HandleTeamRequest(_package, _clientId, _data) 
+    {
+        if (_package.Data is TeamRequest team_request)
+        {
+            if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
+            {
+                if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
+                {
+                    WhitePlayerID = _clientId;
+                    SendDataToAllClients(_data);
+                }
+                else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
+                {
+                    BlackPlayerID = _clientId;
+                    SendDataToAllClients(_data);
+                }
+            }
+            else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE)
+            {
+                if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
+                {
+                    WhitePlayerID = Guid.Empty;
+                    SendDataToAllClients(_data);
+                }
+                else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
+                {
+                    BlackPlayerID = Guid.Empty;
+                    SendDataToAllClients(_data);
+                }
+            }
+        }
+    }
     private void OnApplicationQuit()
     {
         foreach (var client in clients.Values)
