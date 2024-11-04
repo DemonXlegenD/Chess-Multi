@@ -129,6 +129,7 @@ public partial class ChessGameManager : MonoBehaviour
     private Guid whiteClientId = Guid.Empty;
 
     [SerializeField] private bool needToUpdatePieces = false;
+    private PanelInGame panelInGame = null;
 
 
     #region Chess Game Methods
@@ -196,9 +197,6 @@ public partial class ChessGameManager : MonoBehaviour
         {
             teamTurn = otherTeam;
         }
-        // raise event
-        if (OnPlayerTurn != null)
-            OnPlayerTurn(teamTurn == EChessTeam.White);
     }
 
     // used to instantiate newly promoted queen
@@ -300,6 +298,10 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Start()
     {
+        if(panelInGame == null) panelInGame = FindAnyObjectByType<PanelInGame>();
+
+        OnPlayerTurn += panelInGame.WhiteMove;
+
         currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
         ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
         ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
@@ -362,6 +364,8 @@ public partial class ChessGameManager : MonoBehaviour
             if (needToUpdatePieces)
             {
                 UpdatePieces();
+                if (OnPlayerTurn != null)
+                    OnPlayerTurn(teamTurn == EChessTeam.White);
                 needToUpdatePieces = false;
             }
         }
