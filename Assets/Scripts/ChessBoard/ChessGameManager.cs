@@ -170,37 +170,38 @@ public partial class ChessGameManager : MonoBehaviour
 
     public void PlayTurn(Move move)
     {
-        if (boardState.IsValidMove(teamTurn, move))
+
+        needToUpdatePieces = true;
+        BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
+        if (result == BoardState.EMoveResult.Promotion)
         {
-            needToUpdatePieces = true;
-            BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
-            if (result == BoardState.EMoveResult.Promotion)
-            {
-                // instantiate promoted queen gameobject
-                AddQueenAtPos(move.to);
-            }
-
-            EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
-            if (boardState.DoesTeamLose(otherTeam))
-            {
-                // increase score and reset board
-                scores[(int)teamTurn]++;
-                if (OnScoreUpdated != null)
-                    OnScoreUpdated(scores[0], scores[1]);
-
-                PrepareGame(false);
-                // remove extra piece instances if pawn promotions occured
-                teamPiecesArray[0].ClearPromotedPieces();
-                teamPiecesArray[1].ClearPromotedPieces();
-            }
-            else
-            {
-                teamTurn = otherTeam;
-            }
-            // raise event
-            if (OnPlayerTurn != null)
-                OnPlayerTurn(teamTurn == EChessTeam.White);
+            // instantiate promoted queen gameobject
+            AddQueenAtPos(move.to);
         }
+
+        EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
+        if (boardState.DoesTeamLose(otherTeam))
+        {
+            // increase score and reset board
+            scores[(int)teamTurn]++;
+            if (OnScoreUpdated != null)
+                OnScoreUpdated(scores[0], scores[1]);
+
+            PrepareGame(false);
+            // remove extra piece instances if pawn promotions occured
+            teamPiecesArray[0].ClearPromotedPieces();
+            teamPiecesArray[1].ClearPromotedPieces();
+        }
+        else
+        {
+            teamTurn = otherTeam;
+        }
+        // raise event
+        if (OnPlayerTurn != null)
+            OnPlayerTurn(teamTurn == EChessTeam.White);
+
+        UpdatePieces();
+
     }
 
     // used to instantiate newly promoted queen
@@ -500,8 +501,10 @@ public partial class ChessGameManager : MonoBehaviour
                 move.from = startPos;
                 move.to = destPos;
 
-
-                AskToMove(move);
+                if (boardState.IsValidMove(teamTurn, move))
+                {
+                    AskToMove(move);
+                }
 
             }
             else
