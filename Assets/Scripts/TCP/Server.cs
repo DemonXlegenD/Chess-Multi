@@ -67,7 +67,7 @@ public class Server : MonoBehaviour
     {
         isServerRunning = false;
 
-        SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
+        //SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
         SendDataToAllClients(ServerAction.DoAction(DataKey.ACTION_LEAVE_ROOM));
 
         foreach (var client_info in clients.Values)
@@ -356,7 +356,8 @@ public class Server : MonoBehaviour
 
         public static byte[] DoAction(DataKey data_key)
         {
-            SimpleAction chat_message = new SimpleAction(data_key);
+            SimpleAction simple_action = new SimpleAction(data_key);
+            package.Data = simple_action;
 
             return DataSerialize.SerializeToBytes(package);
         }
