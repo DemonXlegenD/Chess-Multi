@@ -19,6 +19,8 @@ public class MainMenu : MonoBehaviour
     [SerializeField] TMPro.TMP_InputField ConnectToIP;
     [SerializeField] TMPro.TextMeshProUGUI IP;
 
+    private RectTransform toChangePanel;
+
     private RectTransform currentMenu;
     private Server server = null;
     private Client client = null;
@@ -26,11 +28,12 @@ public class MainMenu : MonoBehaviour
     Vector3 off = new Vector3(0, 0);
 
     bool wantGamePanel = false;
+    bool needChangePanel = false;
 
     void Start()
     {
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
-        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, LeaveRoom);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
 
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
@@ -54,6 +57,13 @@ public class MainMenu : MonoBehaviour
             ChangeMenu(InGamePanel);
             wantGamePanel = false;
         }
+
+        if(toChangePanel != currentMenu && needChangePanel)
+        {
+            Debug.LogWarning("Leave the room");
+            LeaveRoom();
+            needChangePanel = false;
+        }
     }
 
     public void CreateRoom()
@@ -69,8 +79,15 @@ public class MainMenu : MonoBehaviour
         ChangeMenu(MainMenuJoinRoom);
     }
 
+    public void AskForLeaving()
+    {
+        needChangePanel = true;
+        toChangePanel = MainMenuStart;
+    }
+
     public void LeaveRoom()
     {
+        
         if (Data.GetValue<bool>(DataKey.IS_HOST) && server != null)
         {
             server.StopServer();
@@ -78,7 +95,7 @@ public class MainMenu : MonoBehaviour
         }
         Destroy(client.gameObject);
 
-        ChangeMenu(MainMenuStart);
+        ChangeMenu(toChangePanel);
         Chat.localScale = off;
     }
 
