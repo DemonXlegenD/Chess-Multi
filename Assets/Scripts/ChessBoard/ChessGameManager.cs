@@ -580,6 +580,7 @@ public class MoveData : Data
 
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
+        Debug.Log("Move");
         _actionBlackBoard.GetValue<Action<Move>>(ActionDataKey)?.Invoke(Move);
     }
 
