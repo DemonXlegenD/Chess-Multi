@@ -25,6 +25,8 @@ public class MainMenu : MonoBehaviour
     Vector3 on = new Vector3(1, 1);
     Vector3 off = new Vector3(0, 0);
 
+    bool wantGamePanel = false;
+
     void Start()
     {
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
@@ -41,6 +43,15 @@ public class MainMenu : MonoBehaviour
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
         Data.AddData<string>(DataKey.SERVER_IP, "0");
         Data.AddData<bool>(DataKey.IS_HOST, false);
+    }
+
+    private void Update()
+    {
+        if(currentMenu != InGamePanel && wantGamePanel)
+        {
+            ChangeMenu(InGamePanel);
+            wantGamePanel = false;
+        }
     }
 
     public void CreateRoom()
@@ -93,7 +104,7 @@ public class MainMenu : MonoBehaviour
     {
         Debug.Log("Start Game!!!!");
         GameManager.Instance.OnStartGame();
-        ChangeMenu(InGamePanel);
+        wantGamePanel = true;
     }
 
 

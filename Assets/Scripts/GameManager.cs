@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -17,11 +15,21 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
+    private bool wantToInstantiate = false;
     [SerializeField] ChessGameManager chessGameManagerPrefab;
     private ChessGameManager chessGameManager;
 
     public void OnStartGame()
     {
-        chessGameManager = Instantiate(chessGameManagerPrefab, null);
+        wantToInstantiate = true;
+    }
+
+    private void Update()
+    {
+        if (wantToInstantiate && chessGameManager == null)
+        {
+            chessGameManager = Instantiate(chessGameManagerPrefab, null);
+            wantToInstantiate = false;
+        }
     }
 }
