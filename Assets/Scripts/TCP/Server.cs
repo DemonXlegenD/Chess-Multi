@@ -248,7 +248,27 @@ public class Server : MonoBehaviour
     {
         if (clients.ContainsKey(_clientId))
         {
-            clients[_clientId].Stream.Write(_data, 0, _data.Length);
+            var client = clients[_clientId];
+            if (client.Stream != null && client.Stream.CanWrite)
+            {
+                try
+                {
+                    client.Stream.Write(_data, 0, _data.Length);
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    Debug.LogError($"Erreur : Le flux pour le client {_clientId} est fermé.");
+                    // Gérer la déconnexion ici
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Erreur d'écriture : {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Le flux du client {_clientId} est déjà fermé ou inaccessible.");
+            }
         }
     }
 
