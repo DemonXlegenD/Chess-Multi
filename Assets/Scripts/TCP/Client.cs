@@ -39,7 +39,7 @@ public class Client : MonoBehaviour
 
     public void SetId(Guid id)
     {
-        this.id = id;
+        this.Id = id;
     }
 
     public void SetClientIP(string ip_)

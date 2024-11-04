@@ -252,7 +252,9 @@ public partial class ChessGameManager : MonoBehaviour
 
     private bool IsGameInfoReady()
     {
-        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty) return true;
+        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty) {
+            return true; 
+        }
         return false;
     }
 
@@ -268,7 +270,6 @@ public partial class ChessGameManager : MonoBehaviour
 
     private void SetGameInfo(Guid black_player_id, Guid white_player_id)
     {
-        Debug.Log("Get info : " + black_player_id + white_player_id);
         blackClientId = black_player_id;
         whiteClientId = white_player_id;
     }
@@ -316,6 +317,8 @@ public partial class ChessGameManager : MonoBehaviour
         {
             if (teamTurn == EChessTeam.White)
             {
+                Debug.Log("Current Client ID : " +currentClient.Id);
+                Debug.Log("Xhite Client ID : " + whiteClientId);
                 if (currentClient.Id == whiteClientId)
                 {
                     Debug.Log(currentClient.Pseudo);
