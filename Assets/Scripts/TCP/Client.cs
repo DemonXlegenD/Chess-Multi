@@ -29,6 +29,7 @@ public class Client : MonoBehaviour
 
     private void Start()
     {
+        Data.AddData<Client>(DataKey.CLIENT, this);
         ActionBlackBoard.AddData<Action<Guid>>(DataKey.ACTION_SET_ID, SetId);
     }
 
@@ -38,13 +39,14 @@ public class Client : MonoBehaviour
 
     public void SetId(Guid id)
     {
-        this.id = id;
+        this.Id = id;
     }
 
     public void SetClientIP(string ip_)
     {
         IpServer = ip_;
         Data.SetData(DataKey.SERVER_IP, IpServer);
+      
     }
 
     public void SendPackageId()

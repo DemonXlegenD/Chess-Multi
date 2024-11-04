@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.Serialization;
+using UnityEditor.PackageManager;
 
 
 #region Package
@@ -20,6 +21,11 @@ public struct Package : IHeader, IData, ISerializable
     {
         this.Header = (Header)_info.GetValue("Header", typeof(Header)); ;
         this.Data = (Data)_info.GetValue("Data", typeof(Data));
+    }
+
+    public static Package CreatePackage(Header _header, Data _data)
+    {
+        return new Package(_header, _data);
     }
 
     public void GetObjectData(SerializationInfo _info, StreamingContext _context)

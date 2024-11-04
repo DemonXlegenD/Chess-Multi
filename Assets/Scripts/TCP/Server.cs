@@ -1,14 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using System.Collections.Generic;
-using static Client;
-using UnityEditor.PackageManager;
-using UnityEngine.Analytics;
-using UnityEditor.VersionControl;
 
 
 public class Server : MonoBehaviour
@@ -24,6 +21,9 @@ public class Server : MonoBehaviour
     private Guid WhitePlayerID = Guid.Empty;
     private Guid BlackPlayerID = Guid.Empty;
 
+    public Guid GetWhitePlayerID() { return WhitePlayerID; }
+    public Guid GetBlackPlayerID() { return BlackPlayerID; }
+
     TcpListener server;
     Thread serverThread;
 
@@ -32,6 +32,7 @@ public class Server : MonoBehaviour
     #region Monobehaviours
     void Start()
     {
+        Data.AddData<Server>(DataKey.SERVER, this);
         serverThread = new Thread(new ThreadStart(SetupServer));
         serverThread.Start();
     }
@@ -114,7 +115,7 @@ public class Server : MonoBehaviour
                 data = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
 
-                SendToData(buffer, clientInfo.Id);  
+                SendToData(buffer, clientInfo.Id);
             }
         }
         catch (SocketException e)
@@ -140,13 +141,22 @@ public class Server : MonoBehaviour
                 Debug.Log("Opponent");
                 break;
             case SendMethod.ONLY_CLIENT:
-                if(package.Data is IdRequest id_request)
+                if (package.Data is IdRequest id_request)
                 {
+                    Debug.Log(_clientId);
+                    Header header = package.Header;
+                    header.Id = _clientId;
+                    package.Header = header;
                     id_request.Id = _clientId;
-                    Debug.Log(package.Data);
-                    _data = DataSerialize.SerializeToBytes(package);
                 }
 
+                if (package.Data is ChessInfoGameData chess_info_game_data)
+                {
+                    chess_info_game_data.BlackPlayerId = BlackPlayerID;
+                    chess_info_game_data.WhitePlayerId = WhitePlayerID;
+                }
+
+                _data = DataSerialize.SerializeToBytes(package);
                 SendDataToClient(_clientId, _data);
                 Debug.Log("Only client");
                 break;
@@ -156,28 +166,31 @@ public class Server : MonoBehaviour
                 break;
             case SendMethod.ONLY_SERVER:
                 Debug.Log("ONLY_SERVER");
-                if(package.Data is TeamRequest team_request)
+                if (package.Data is TeamRequest team_request)
                 {
-                    if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN) 
+                    if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
                     {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty) 
+                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty)
                         {
                             Debug.Log("join");
                             WhitePlayerID = _clientId;
                             SendDataToAllClients(_data);
-                        } else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty) 
+                        }
+                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty)
                         {
                             BlackPlayerID = _clientId;
                             SendDataToAllClients(_data);
                         }
-                    } else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE) 
+                    }
+                    else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE)
                     {
-                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId) 
+                        if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
                         {
                             Debug.Log("leave");
                             WhitePlayerID = Guid.Empty;
                             SendDataToAllClients(_data);
-                        } else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId) 
+                        }
+                        else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
                         {
                             BlackPlayerID = Guid.Empty;
                             SendDataToAllClients(_data);
@@ -204,8 +217,8 @@ public class Server : MonoBehaviour
         server.Stop();
         serverThread.Abort();
     }
-    
-    public void QuitServer() 
+
+    public void QuitServer()
     {
         //BroadcastMessageToClients(broadcastMessage); LEAVE ROOM TO MAIN MENUE
         foreach (var client in clients.Values)

@@ -23,16 +23,16 @@ public class ChessAI : MonoBehaviour
 
     #region AI
 
-    public ChessGameManager.Move ComputeMove()
+    public Move ComputeMove()
     {
         // random AI move
 
-        ChessGameManager.Move move;
+        Move move;
         move.from = 0;
         move.to = 1;
 
-        List<ChessGameManager.Move> moves = new List<ChessGameManager.Move>(); ;
-        ChessGameManager.Instance.GetBoardState().GetValidMoves(ChessGameManager.EChessTeam.Black, moves);
+        List<Move> moves = new List<Move>(); ;
+        ChessGameManager.Instance.GetBoardState().GetValidMoves(EChessTeam.Black, moves);
 
         if (moves.Count > 0)
             move = moves[Random.Range(0, moves.Count - 1)];

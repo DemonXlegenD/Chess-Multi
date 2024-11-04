@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using UnityEngine;
 
 /*
  * This singleton manages the whole chess game
@@ -9,12 +11,99 @@ using System.Collections.Generic;
  *  - AI update calls (see UpdateAITurn and ChessAI class)
  */
 
+
+#region Enums
+public enum EPieceType : uint
+{
+    Pawn = 0,
+    King,
+    Queen,
+    Rook,
+    Knight,
+    Bishop,
+    NbPieces,
+    None
+}
+
+public enum EChessTeam
+{
+    White = 0,
+    Black,
+    None
+}
+
+public enum ETeamFlag : uint
+{
+    None = 1 << 0,
+    Friend = 1 << 1,
+    Enemy = 1 << 2
+}
+#endregion
+
+#region Structs & Classes
+public struct BoardSquare
+{
+    public EPieceType piece;
+    public EChessTeam team;
+
+    public BoardSquare(EPieceType p, EChessTeam t)
+    {
+        piece = p;
+        team = t;
+    }
+
+    static public BoardSquare Empty()
+    {
+        BoardSquare res;
+        res.piece = EPieceType.None;
+        res.team = EChessTeam.None;
+        return res;
+    }
+}
+
+[Serializable]
+public struct Move
+{
+    public int from;
+    public int to;
+
+    public override bool Equals(object o)
+    {
+        try
+        {
+            return (bool)(this == (Move)o);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public override int GetHashCode()
+    {
+        return from + to;
+    }
+
+    public static bool operator ==(Move move1, Move move2)
+    {
+        return move1.from == move2.from && move1.to == move2.to;
+    }
+
+    public static bool operator !=(Move move1, Move move2)
+    {
+        return move1.from != move2.from || move1.to != move2.to;
+    }
+}
+
+#endregion
+
 public partial class ChessGameManager : MonoBehaviour
 {
 
     #region Singleton
     static ChessGameManager instance = null;
-    public static ChessGameManager Instance {
+    public static ChessGameManager Instance
+    {
         get
         {
             if (instance == null)
@@ -25,7 +114,9 @@ public partial class ChessGameManager : MonoBehaviour
     #endregion
 
     [SerializeField]
-    private bool isAIEnabled = true;
+    private bool isAIEnabled = false;
+    [SerializeField] private BlackBoard blackBoard;
+    [SerializeField] private BlackBoard ActionBlackBoard;
 
     private ChessAI chessAI = null;
     private Transform boardTransform = null;
@@ -33,89 +124,13 @@ public partial class ChessGameManager : MonoBehaviour
     private int pieceLayerMask;
     private int boardLayerMask;
 
-    #region Enums
-    public enum EPieceType : uint
-    {
-        Pawn = 0,
-        King,
-        Queen,
-        Rook,
-        Knight,
-        Bishop,
-        NbPieces,
-        None
-    }
+    private Client currentClient;
+    private Guid blackClientId = Guid.Empty;
+    private Guid whiteClientId = Guid.Empty;
 
-    public enum EChessTeam
-    {
-        White = 0,
-        Black,
-        None
-    }
+    [SerializeField] private bool needToUpdatePieces = false;
+    private PanelInGame panelInGame = null;
 
-    public enum ETeamFlag : uint
-    {
-        None = 1 << 0,
-        Friend = 1 << 1,
-        Enemy = 1 << 2
-    }
-    #endregion
-
-    #region Structs & Classes
-    public struct BoardSquare
-    {
-        public EPieceType piece;
-        public EChessTeam team;
-
-        public BoardSquare(EPieceType p, EChessTeam t)
-        {
-            piece = p;
-            team = t;
-        }
-
-        static public BoardSquare Empty()
-        {
-            BoardSquare res;
-            res.piece = EPieceType.None;
-            res.team = EChessTeam.None;
-            return res;
-        }
-    }
-
-    public struct Move
-    {
-        public int from;
-        public int to;
-
-        public override bool Equals(object o)
-        {
-            try
-            {
-                return (bool)(this == (Move)o);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public override int GetHashCode()
-        {
-            return from + to;
-        }
-
-        public static bool operator ==(Move move1, Move move2)
-        {
-            return move1.from == move2.from && move1.to == move2.to;
-        }
-
-        public static bool operator !=(Move move1, Move move2)
-        {
-            return move1.from != move2.from || move1.to != move2.to;
-        }
-    }
-
-    #endregion
 
     #region Chess Game Methods
 
@@ -156,35 +171,31 @@ public partial class ChessGameManager : MonoBehaviour
 
     public void PlayTurn(Move move)
     {
-        if (boardState.IsValidMove(teamTurn, move))
+
+        needToUpdatePieces = true;
+        BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
+        if (result == BoardState.EMoveResult.Promotion)
         {
-            BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
-            if (result == BoardState.EMoveResult.Promotion)
-            {
-                // instantiate promoted queen gameobject
-                AddQueenAtPos(move.to);
-            }
+            // instantiate promoted queen gameobject
+            AddQueenAtPos(move.to);
+        }
 
-            EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
-            if (boardState.DoesTeamLose(otherTeam))
-            {
-                // increase score and reset board
-                scores[(int)teamTurn]++;
-                if (OnScoreUpdated != null)
-                    OnScoreUpdated(scores[0], scores[1]);
+        EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
+        if (boardState.DoesTeamLose(otherTeam))
+        {
+            // increase score and reset board
+            scores[(int)teamTurn]++;
+            if (OnScoreUpdated != null)
+                OnScoreUpdated(scores[0], scores[1]);
 
-                PrepareGame(false);
-                // remove extra piece instances if pawn promotions occured
-                teamPiecesArray[0].ClearPromotedPieces();
-                teamPiecesArray[1].ClearPromotedPieces();
-            }
-            else
-            {
-                teamTurn = otherTeam;
-            }
-            // raise event
-            if (OnPlayerTurn != null)
-                OnPlayerTurn(teamTurn == EChessTeam.White);
+            PrepareGame(false);
+            // remove extra piece instances if pawn promotions occured
+            teamPiecesArray[0].ClearPromotedPieces();
+            teamPiecesArray[1].ClearPromotedPieces();
+        }
+        else
+        {
+            teamTurn = otherTeam;
         }
     }
 
@@ -238,6 +249,47 @@ public partial class ChessGameManager : MonoBehaviour
 
     #endregion
 
+    #region GameInfo
+
+    private bool IsGameInfoReady()
+    {
+        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private void AskGameInfo()
+    {
+        Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ONLY_CLIENT);
+        ChessInfoGameData data = new ChessInfoGameData(DataKey.ACTION_CHESS_GAME_INFO);
+
+        Package package = Package.CreatePackage(header, data);
+
+        currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
+
+    private void SetGameInfo(Guid white_player_id, Guid black_player_id)
+    {
+        blackClientId = black_player_id;
+        whiteClientId = white_player_id;
+    }
+
+    private void AskToMove(Move move)
+    {
+        Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+
+        MoveData moveData = new MoveData(DataKey.ACTION_PLAY_MOVE);
+        moveData.Move = move;
+
+        Package package = Package.CreatePackage(header, moveData);
+
+        currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
+
+    #endregion
+
     #region MonoBehaviour
 
     private TeamPieces[] teamPiecesArray = new TeamPieces[2];
@@ -246,6 +298,16 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Start()
     {
+        if(panelInGame == null) panelInGame = FindAnyObjectByType<PanelInGame>();
+
+        OnPlayerTurn += panelInGame.WhiteMove;
+
+        currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
+        ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
+        ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
+
+        AskGameInfo();
+
         pieceLayerMask = 1 << LayerMask.NameToLayer("Piece");
         boardLayerMask = 1 << LayerMask.NameToLayer("Board");
 
@@ -270,14 +332,44 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Update()
     {
-        // human player always plays white
-        if (teamTurn == EChessTeam.White)
-            UpdatePlayerTurn();
-        // AI plays black
-        else if (isAIEnabled)
-            UpdateAITurn();
-        else
-            UpdatePlayerTurn();
+        if (IsGameInfoReady())
+        {
+            if (teamTurn == EChessTeam.White)
+            {
+                Debug.Log("Current Client ID : " + currentClient.Id);
+                Debug.Log("Xhite Client ID : " + whiteClientId);
+                if (currentClient.Id == whiteClientId)
+                {
+                    Debug.Log(currentClient.Pseudo);
+                    UpdatePlayerTurn();
+                }
+            }
+            else if (teamTurn == EChessTeam.Black)
+            {
+                if (currentClient.Id == blackClientId)
+                {
+                    Debug.Log(currentClient.Pseudo);
+                    UpdatePlayerTurn();
+                }
+            }
+            else if (isAIEnabled)
+            {
+                UpdateAITurn();
+            }
+            else
+            {
+                Watch();
+            }
+
+            if (needToUpdatePieces)
+            {
+                UpdatePieces();
+                if (OnPlayerTurn != null)
+                    OnPlayerTurn(teamTurn == EChessTeam.White);
+                needToUpdatePieces = false;
+            }
+        }
+
     }
     #endregion
 
@@ -371,6 +463,11 @@ public partial class ChessGameManager : MonoBehaviour
     int startPos = 0;
     int destPos = 0;
 
+    private void Watch()
+    {
+
+    }
+
     void UpdateAITurn()
     {
         Move move = chessAI.ComputeMove();
@@ -405,9 +502,13 @@ public partial class ChessGameManager : MonoBehaviour
                 move.from = startPos;
                 move.to = destPos;
 
-                PlayTurn(move);
-
-                UpdatePieces();
+                if (boardState.IsValidMove(teamTurn, move))
+                {
+                    AskToMove(move);
+                } else
+                {
+                    UpdatePieces();
+                }
             }
             else
             {
@@ -441,4 +542,65 @@ public partial class ChessGameManager : MonoBehaviour
     }
 
     #endregion
+}
+
+[Serializable]
+public class ChessInfoGameData : Data
+{
+    public Guid WhitePlayerId = Guid.Empty;
+
+    public Guid BlackPlayerId = Guid.Empty;
+
+    public ChessInfoGameData(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action<Guid, Guid>>(ActionDataKey)?.Invoke(WhitePlayerId, BlackPlayerId);
+    }
+
+    public ChessInfoGameData(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+        WhitePlayerId = (Guid)_info.GetValue("WhitePlayerId", typeof(Guid));
+        BlackPlayerId = (Guid)_info.GetValue("BlackPlayerId", typeof(Guid));
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
+
+        _info.AddValue("WhitePlayerId", WhitePlayerId);
+        _info.AddValue("BlackPlayerId", BlackPlayerId);
+    }
+}
+
+[Serializable]
+public class MoveData : Data
+{
+    public Move Move;
+
+    public MoveData(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        Debug.Log("Move");
+        _actionBlackBoard.GetValue<Action<Move>>(ActionDataKey)?.Invoke(Move);
+    }
+
+    public MoveData(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+        Move = (Move)_info.GetValue("Move", typeof(Move));
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
+
+        _info.AddValue("Move", Move);
+    }
 }
