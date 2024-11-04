@@ -10,7 +10,7 @@ public enum DataKey
     ACTION_TEAM_REQUEST,
     ACTION_START_GAME_BY_HOST,
 
-
+    GAME_MANAGER,
     PLAYER_NICKNAME,
     SERVER_IP,
     IS_HOST,

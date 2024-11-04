@@ -15,9 +15,15 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
+    [SerializeField] private BlackBoard blackBoard;
     private bool wantToInstantiate = false;
     [SerializeField] ChessGameManager chessGameManagerPrefab;
-    private ChessGameManager chessGameManager;
+    private ChessGameManager chessGameManager = null;
+
+    private void Start()
+    {
+        blackBoard.AddData<GameManager>(DataKey.GAME_MANAGER, Instance);
+    }
 
     public void OnStartGame()
     {

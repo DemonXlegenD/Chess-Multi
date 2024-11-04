@@ -103,7 +103,7 @@ public class MainMenu : MonoBehaviour
     public void StartGameAskByHost()
     {
         Debug.Log("Start Game!!!!");
-        GameManager.Instance.OnStartGame();
+        Data.GetValue<GameManager>(DataKey.GAME_MANAGER).OnStartGame();
         wantGamePanel = true;
     }
 
