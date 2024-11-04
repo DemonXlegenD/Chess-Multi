@@ -74,7 +74,7 @@ public class MainMenu : MonoBehaviour
 
         if (Data.GetValue<bool>(DataKey.IS_HOST))
         {
-            server.QuitServer();
+            server.StopServer();
             Destroy(server.gameObject);
         }
 
