@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
@@ -32,7 +29,7 @@ public class MainMenu : MonoBehaviour
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
-        
+
         MainMenuJoinRoom.localScale = off;
         MainMenuWaitForConnection.localScale = off;
         MainMenuConnectionFail.localScale = off;
@@ -45,20 +42,20 @@ public class MainMenu : MonoBehaviour
         Data.AddData<bool>(DataKey.IS_HOST, false);
     }
 
-    public void CreateRoom() 
+    public void CreateRoom()
     {
         server = Instantiate(ServerPrefab);
         Invoke("HostConnection", 1);
     }
 
-    public void JoinRoom() 
+    public void JoinRoom()
     {
         Data.SetData(DataKey.IS_HOST, false);
 
         ChangeMenu(MainMenuJoinRoom);
     }
 
-    public void LeaveRoom() 
+    public void LeaveRoom()
     {
         client.QuitClient();
         Destroy(client.gameObject);
@@ -73,9 +70,9 @@ public class MainMenu : MonoBehaviour
         Chat.localScale = off;
     }
 
-    public void StartGame() 
+    public void StartGame()
     {
-        if (Data.GetValue<bool>(DataKey.IS_HOST)) 
+        if (Data.GetValue<bool>(DataKey.IS_HOST))
         {
             Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
 
@@ -100,20 +97,20 @@ public class MainMenu : MonoBehaviour
 
 
 
-    public void TryToConnect() 
+    public void TryToConnect()
     {
         ChangeMenu(MainMenuConnectionFail);
 
-        ProcessConnectClient(ConnectToIP.text);    
+        ProcessConnectClient(ConnectToIP.text);
     }
 
-    public void HostConnection() 
+    public void HostConnection()
     {
         Data.SetData(DataKey.IS_HOST, true);
         ProcessConnectClient(Data.GetValue<string>(DataKey.SERVER_IP));
     }
 
-    public void ProcessConnectClient(string _ip) 
+    public void ProcessConnectClient(string _ip)
     {
         Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         client = Instantiate(ClientPrefab);
@@ -124,27 +121,29 @@ public class MainMenu : MonoBehaviour
 
         if (connectionSuccess)
         {
-            SucceedToConnect(); 
-        } else {
+            SucceedToConnect();
+        }
+        else
+        {
             FailToConnect();
         }
     }
 
-    public bool SetUpClientConnection() 
+    public bool SetUpClientConnection()
     {
         client = Instantiate(ClientPrefab);
         string ip_address = Data.GetValue<string>(DataKey.SERVER_IP);
 
-        if (ip_address == "0") 
+        if (ip_address == "0")
         {
             ip_address = ConnectToIP.text;
-        }        
+        }
         client.SetClientIP(ip_address); // Remove the last character '\0'
 
         return client.ConnectToServer();
     }
 
-    public void FailToConnect() 
+    public void FailToConnect()
     {
         Data.SetData(DataKey.IS_HOST, false);
         client.QuitClient();
@@ -153,7 +152,7 @@ public class MainMenu : MonoBehaviour
         ChangeMenu(MainMenuConnectionFail);
     }
 
-    public void SucceedToConnect() 
+    public void SucceedToConnect()
     {
         Invoke("UpdateIP", 1);
 
@@ -167,17 +166,17 @@ public class MainMenu : MonoBehaviour
         IP.text = Data.GetValue<string>(DataKey.SERVER_IP);
     }
 
-    public void BackToMenuBecauseDoNotWantToJoinRoom() 
+    public void BackToMenuBecauseDoNotWantToJoinRoom()
     {
         ChangeMenu(MainMenuStart);
     }
 
-    public void BackToMenuAfterFailToConnect() 
+    public void BackToMenuAfterFailToConnect()
     {
         ChangeMenu(MainMenuStart);
     }
 
-    public void ChangeMenu(RectTransform menuToDisplay) 
+    public void ChangeMenu(RectTransform menuToDisplay)
     {
         currentMenu.localScale = off;
         currentMenu = menuToDisplay;
@@ -185,10 +184,11 @@ public class MainMenu : MonoBehaviour
     }
 }
 
+[Serializable]
 public class ChessManagerRequest : Data
 {
-     public ChessManagerRequest(DataKey _actionDataKey) : base(_actionDataKey)
-        {
+    public ChessManagerRequest(DataKey _actionDataKey) : base(_actionDataKey)
+    {
 
     }
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
