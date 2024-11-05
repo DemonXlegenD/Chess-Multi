@@ -138,14 +138,14 @@ public class TeamHandler : MonoBehaviour
         }  
     }
 
-    private void JoinWhite(string playerName)
+    public void JoinWhite(string playerName)
     {
         LeaveSpectator(playerName);
         whitePlayer = playerName;
         shouldUpdate = true;
     }
 
-    private void JoinBlack(string playerName)
+    public void JoinBlack(string playerName)
     {
         LeaveSpectator(playerName);
         blackPlayer = playerName; 

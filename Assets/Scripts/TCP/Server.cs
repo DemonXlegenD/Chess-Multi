@@ -27,6 +27,11 @@ public class Server : MonoBehaviour
 
     public Guid GetWhitePlayerID() { return WhitePlayerID; }
     public Guid GetBlackPlayerID() { return BlackPlayerID; }
+    private string WhitePlayerNickname = "";
+    private string BlackPlayerNickname = "";
+
+    public string GetWhitePlayerNickname() { return WhitePlayerNickname; }
+    public string GetBlackPlayerNickname() { return BlackPlayerNickname; }
 
     TcpListener server;
     Thread serverThread;
@@ -257,13 +262,20 @@ public class Server : MonoBehaviour
                 break;
             case SendMethod.ONLY_SERVER:
                 Debug.Log("ONLY_SERVER");
-                HandleTeamRequest(package, _clientId, _data);
-                if (package.Data is ChessManagerRequest chess_manager_request)
+                HandleTeamRequest(package, _clientId, _data); // Leave or join team
+                if (package.Data is ChessManagerRequest chess_manager_request) // Start game
                 {
                     if(WhitePlayerID != Guid.Empty && BlackPlayerID != Guid.Empty) 
                     {
                         SendDataToAllClients(_data);
                     }
+                }
+                else if (package.Data is RoomInfoData room_info)
+                {
+                    room_info.BlackPlayerNickname = BlackPlayerID;
+                    room_info.WhitePlayerNickname = WhitePlayerID;
+                    _data = DataSerialize.SerializeToBytes(package);
+                    SendDataToClient(_clientId, _data);
                 }
                 break;
             case SendMethod.ONLY_SPECTATORS:
@@ -284,11 +296,13 @@ public class Server : MonoBehaviour
                 if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
                 {
                     WhitePlayerID = _clientId;
+                    WhitePlayerNickname = package.Header.Pseudo;
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
                 {
                     BlackPlayerID = _clientId;
+                    BlackPlayerNickname = package.Header.Pseudo;
                     SendDataToAllClients(_data);
                 }
             }
@@ -297,11 +311,13 @@ public class Server : MonoBehaviour
                 if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
                 {
                     WhitePlayerID = Guid.Empty;
+                    WhitePlayerNickname = "";
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
                 {
                     BlackPlayerID = Guid.Empty;
+                    BlackPlayerNickname = "";
                     SendDataToAllClients(_data);
                 }
             }

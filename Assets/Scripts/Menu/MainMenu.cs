@@ -37,6 +37,7 @@ public class MainMenu : MonoBehaviour
 
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
+        ActionBlackBoard.AddData<Action<string, string>>(DataKey.ACTION_ROOM_INFO, SetRoomInfo);
 
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
@@ -67,6 +68,22 @@ public class MainMenu : MonoBehaviour
             LeaveRoom();
             needChangePanel = false;
         }
+    }
+
+    private void AskRoomInfo()
+    {
+        Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
+        RoomInfoData data = new RoomInfoData(DataKey.ACTION_ROOM_INFO);
+
+        Package package = Package.CreatePackage(header, data);
+
+        currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
+
+    private void SetRoomInfo(string white_player_nickname, string black_player_nickname)
+    {
+        teamHandler.JoinWhite(white_player_nickname);
+        teamHandler.JoinBlack(black_player_nickname);
     }
 
     public void CreateRoom()
@@ -183,6 +200,7 @@ public class MainMenu : MonoBehaviour
     {
         Invoke("UpdateIP", 1);
         teamHandler.ResetTeams();
+        AskRoomInfo();
         ChangeMenu(MainMenuRoom);
         Chat.localScale = on;
     }
@@ -208,6 +226,38 @@ public class MainMenu : MonoBehaviour
         currentMenu.localScale = off;
         currentMenu = menuToDisplay;
         currentMenu.localScale = on;
+    }
+}
+
+[Serializable]
+public class RoomInfoData : Data
+{
+    public string WhitePlayerNickname = "";
+
+    public string BlackPlayerNickname = "";
+
+    public RoomInfoData(DataKey _actionDataKey) : base(_actionDataKey)
+    {
+
+    }
+
+    public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
+    {
+        _actionBlackBoard.GetValue<Action<string, string>>(ActionDataKey)?.Invoke(WhitePlayerNickname, BlackPlayerNickname);
+    }
+
+    public RoomInfoData(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
+    {
+        WhitePlayerNickname = (string)_info.GetValue("WhitePlayerNickname", typeof(string));
+        BlackPlayerNickname = (string)_info.GetValue("BlackPlayerNickname", typeof(string));
+    }
+
+    public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
+    {
+        base.GetObjectData(_info, _ctxt);
+
+        _info.AddValue("WhitePlayerNickname", WhitePlayerNickname);
+        _info.AddValue("BlackPlayerNickname", BlackPlayerNickname);
     }
 }
 
