@@ -72,13 +72,16 @@ public class MainMenu : MonoBehaviour
 
     private void AskRoomInfo()
     {
-        Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
-        Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
-        RoomInfoData data = new RoomInfoData(DataKey.ACTION_ROOM_INFO);
+        if (!Data.GetValue<bool>(DataKey.IS_HOST))
+        {
+            Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
+            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
+            RoomInfoData data = new RoomInfoData(DataKey.ACTION_ROOM_INFO);
 
-        Package package = Package.CreatePackage(header, data);
+            Package package = Package.CreatePackage(header, data);
 
-        current_client.SendDataToServer(DataSerialize.SerializeToBytes(package));
+            current_client.SendDataToServer(DataSerialize.SerializeToBytes(package));
+        }
     }
 
     private void SetRoomInfo(string white_player_nickname, string black_player_nickname)
