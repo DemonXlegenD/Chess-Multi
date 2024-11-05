@@ -205,7 +205,6 @@ public partial class ChessGameManager : MonoBehaviour
         teamPiecesArray[(int)teamTurn].AddPiece(EPieceType.Queen);
         GameObject[] crtTeamPrefabs = (teamTurn == EChessTeam.White) ? whitePiecesPrefab : blackPiecesPrefab;
         GameObject crtPiece = Instantiate(crtTeamPrefabs[(uint)EPieceType.Queen]);
-        crtPiece.SetActive(false);
         teamPiecesArray[(int)teamTurn].StorePiece(crtPiece, EPieceType.Queen);
         crtPiece.transform.position = GetWorldPos(pos);
     }
