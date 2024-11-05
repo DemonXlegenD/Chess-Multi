@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PanelLobby : MonoBehaviour
@@ -7,10 +5,16 @@ public class PanelLobby : MonoBehaviour
     [SerializeField] private BlackBoard blackBoard;
     [SerializeField] private RectTransform startRectTransform;
 
+    #region MonoBehaviors
+
     void Start()
     {
         startRectTransform.gameObject.SetActive(false);
     }
+
+    #endregion
+
+    #region Display Methods
 
     public void DisplayStartButton()
     { 
@@ -21,4 +25,6 @@ public class PanelLobby : MonoBehaviour
     {
         startRectTransform.gameObject.SetActive(false);
     }
+
+    #endregion
 }

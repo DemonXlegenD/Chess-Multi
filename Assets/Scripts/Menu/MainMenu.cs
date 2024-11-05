@@ -31,13 +31,11 @@ public class MainMenu : MonoBehaviour
     bool wantGamePanel = false;
     bool needChangePanel = false;
 
+    #region MonoBehaviors
+
     void Start()
     {
         teamHandler = GetComponent<TeamHandler>();
-
-        ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
-        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
-        ActionBlackBoard.AddData<Action<string, string>>(DataKey.ACTION_ROOM_INFO, SetRoomInfo);
 
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
@@ -49,9 +47,7 @@ public class MainMenu : MonoBehaviour
         Chat.localScale = off;
         InGamePanel.localScale = off;
 
-        Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
-        Data.AddData<string>(DataKey.SERVER_IP, "0");
-        Data.AddData<bool>(DataKey.IS_HOST, false);
+        CreateData();
     }
 
     private void Update()
@@ -70,43 +66,73 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-    private void AskRoomInfo()
+    private void OnDestroy()
     {
-        if (!Data.GetValue<bool>(DataKey.IS_HOST))
-        {
-            Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
-            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
-            RoomInfoData data = new RoomInfoData(DataKey.ACTION_ROOM_INFO);
-
-            Package package = Package.CreatePackage(header, data);
-
-            current_client.SendDataToServer(DataSerialize.SerializeToBytes(package));
-        }
+        ClearData();
     }
 
-    private void SetRoomInfo(string white_player_nickname, string black_player_nickname)
+    #endregion
+
+    #region Blackboard Data
+
+    public void CreateData()
     {
-        teamHandler.JoinWhite(white_player_nickname);
-        teamHandler.JoinBlack(black_player_nickname);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
+        ActionBlackBoard.AddData<Action<string, string>>(DataKey.ACTION_ROOM_INFO, SetRoomInfo);
+
+        Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
+        Data.AddData<string>(DataKey.SERVER_IP, "0");
+        Data.AddData<bool>(DataKey.IS_HOST, false);
     }
 
+    public void ClearData()
+    {
+        ActionBlackBoard.ClearData(DataKey.ACTION_START_GAME_BY_HOST);
+        ActionBlackBoard.ClearData(DataKey.ACTION_LEAVE_ROOM);
+        ActionBlackBoard.ClearData(DataKey.ACTION_ROOM_INFO);
+
+        Data.ClearData(DataKey.PLAYER_NICKNAME);
+        Data.ClearData(DataKey.SERVER_IP);
+        Data.ClearData(DataKey.IS_HOST);
+    }
+
+    #endregion
+
+    #region Panel
+
+    public void ChangeMenu(RectTransform menuToDisplay)
+    {
+        currentMenu.localScale = off;
+        currentMenu = menuToDisplay;
+        currentMenu.localScale = on;
+    }
+
+    public void BackToMenuBecauseDoNotWantToJoinRoom()
+    {
+        ChangeMenu(MainMenuStart);
+    }
+
+    public void BackToMenuAfterFailToConnect()
+    {
+        ChangeMenu(MainMenuStart);
+    }
+
+    #endregion
+
+    #region Room Service
+
+    #region Actions
     public void CreateRoom()
     {
         server = Instantiate(ServerPrefab);
-        Invoke("HostConnection", 1);
+        Invoke("HostConnection", 0.5f);
     }
 
     public void JoinRoom()
     {
         Data.SetData(DataKey.IS_HOST, false);
-
         ChangeMenu(MainMenuJoinRoom);
-    }
-
-    public void AskForLeaving()
-    {
-        needChangePanel = true;
-        toChangePanel = MainMenuStart;
     }
 
     public void LeaveRoom()
@@ -138,12 +164,9 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-    public void StartGameAskByHost()
-    {
-        Debug.Log("Start Game!!!!");
-        Data.GetValue<GameManager>(DataKey.GAME_MANAGER).OnStartGame();
-        wantGamePanel = true;
-    }
+    #endregion
+
+    #region Connections
 
     public void TryToConnect()
     {
@@ -185,7 +208,7 @@ public class MainMenu : MonoBehaviour
         {
             ip_address = ConnectToIP.text;
         }
-        client.SetClientIP(ip_address); // Remove the last character '\0'
+        client.SetClientIP(ip_address);
 
         return client.ConnectToServer();
     }
@@ -208,28 +231,49 @@ public class MainMenu : MonoBehaviour
         Invoke("AskRoomInfo", 1);
     }
 
+    #endregion
+
+    #region Info
+
+    private void AskRoomInfo()
+    {
+        if (!Data.GetValue<bool>(DataKey.IS_HOST))
+        {
+            Client current_client = Data.GetValue<Client>(DataKey.CLIENT);
+            Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
+            RoomInfoData data = new RoomInfoData(DataKey.ACTION_ROOM_INFO);
+
+            Package package = Package.CreatePackage(header, data);
+
+            current_client.SendDataToServer(DataSerialize.SerializeToBytes(package));
+        }
+    }
+    private void SetRoomInfo(string white_player_nickname, string black_player_nickname)
+    {
+        teamHandler.JoinWhite(white_player_nickname);
+        teamHandler.JoinBlack(black_player_nickname);
+    }
+
+    public void AskForLeaving()
+    {
+        needChangePanel = true;
+        toChangePanel = MainMenuStart;
+    }
+
+    public void StartGameAskByHost()
+    {
+        Data.GetValue<GameManager>(DataKey.GAME_MANAGER).OnStartGame();
+        wantGamePanel = true;
+    }
+
     void UpdateIP()
     {
-        Debug.Log(Data);
         IP.text = Data.GetValue<string>(DataKey.SERVER_IP);
     }
 
-    public void BackToMenuBecauseDoNotWantToJoinRoom()
-    {
-        ChangeMenu(MainMenuStart);
-    }
+    #endregion
 
-    public void BackToMenuAfterFailToConnect()
-    {
-        ChangeMenu(MainMenuStart);
-    }
-
-    public void ChangeMenu(RectTransform menuToDisplay)
-    {
-        currentMenu.localScale = off;
-        currentMenu = menuToDisplay;
-        currentMenu.localScale = on;
-    }
+    #endregion
 }
 
 [Serializable]

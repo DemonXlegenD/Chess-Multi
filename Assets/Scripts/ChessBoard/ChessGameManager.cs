@@ -272,6 +272,7 @@ public partial class ChessGameManager : MonoBehaviour
 
     private void SetGameInfo(Guid white_player_id, Guid black_player_id)
     {
+        GetData();
         blackClientId = black_player_id;
         whiteClientId = white_player_id;
     }
@@ -302,9 +303,8 @@ public partial class ChessGameManager : MonoBehaviour
 
         OnPlayerTurn += panelInGame.WhiteMove;
 
-        currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
-        ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
-        ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
+        CreateData();
+        GetData();
 
         AskGameInfo();
 
@@ -336,11 +336,8 @@ public partial class ChessGameManager : MonoBehaviour
         {
             if (teamTurn == EChessTeam.White)
             {
-                Debug.Log("Current Client ID : " + currentClient.Id);
-                Debug.Log("Xhite Client ID : " + whiteClientId);
                 if (currentClient.Id == whiteClientId)
                 {
-                    Debug.Log(currentClient.Pseudo);
                     UpdatePlayerTurn();
                 }
             }
@@ -348,7 +345,6 @@ public partial class ChessGameManager : MonoBehaviour
             {
                 if (currentClient.Id == blackClientId)
                 {
-                    Debug.Log(currentClient.Pseudo);
                     UpdatePlayerTurn();
                 }
             }
@@ -371,6 +367,33 @@ public partial class ChessGameManager : MonoBehaviour
         }
 
     }
+
+    private void OnDestroy()
+    {
+        ClearData();
+    }
+
+    #endregion
+
+    #region Blackboard Data
+
+    private void CreateData()
+    {
+        ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
+        ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
+    }
+
+    private void GetData()
+    {
+        currentClient = blackBoard.GetValue<Client>(DataKey.CLIENT);
+    }
+
+    private void ClearData()
+    {
+        ActionBlackBoard.ClearData(DataKey.ACTION_CHESS_GAME_INFO);
+        ActionBlackBoard.ClearData(DataKey.ACTION_PLAY_MOVE);
+    }
+
     #endregion
 
     #region Pieces

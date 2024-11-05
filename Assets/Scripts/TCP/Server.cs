@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 
@@ -48,13 +47,7 @@ public class Server : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        foreach (var client in clients.Values)
-        {
-            client.Stream.Close();
-            client.TcpClient.Close();
-        }
-        server.Stop();
-        serverThread.Abort();
+        StopServer();
     }
 
     #endregion
@@ -74,6 +67,8 @@ public class Server : MonoBehaviour
 
         //SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
         SendDataToAllClients(ServerAction.DoAction(DataKey.ACTION_LEAVE_ROOM));
+
+        Data.ClearData(DataKey.SERVER_IP);
 
         foreach (var client_info in clients.Values)
         {
@@ -213,7 +208,7 @@ public class Server : MonoBehaviour
         }
         finally
         {
-            // Ferme et nettoie la connexion client
+            // Close and Clean the client
             client.Close();
             clients.Remove(clientInfo.Id);
             Debug.Log("Client " + clientInfo.Id + " removed from the client list.");
@@ -323,20 +318,8 @@ public class Server : MonoBehaviour
             }
         }
     }
-
-    public void QuitServer()
-    {
-        //BroadcastMessageToClients(broadcastMessage); LEAVE ROOM TO MAIN MENUE
-        foreach (var client in clients.Values)
-        {
-            client.Stream.Close();
-            client.TcpClient.Close();
-        }
-        server.Stop();
-        serverThread.Abort();
-    }
-
     #endregion
+
     #region Basic Message
     public void SendMessageToClient(Guid clientId, string message)
     {

@@ -17,20 +17,18 @@ public struct SerializableColor
         this.a = a;
     }
 
-    // Conversion vers une couleur Unity
     public Color ToUnityColor()
     {
         return new Color(r, g, b, a);
     }
 
-    // Conversion en code hexadécimal
     public string ToHex()
     {
         Color32 color32 = ToUnityColor();
         return $"#{color32.r:X2}{color32.g:X2}{color32.b:X2}{color32.a:X2}";
     }
 
-    // Couleurs par défaut
+    // Default colors
     public static SerializableColor White => new SerializableColor(1, 1, 1, 1);
     public static SerializableColor Black => new SerializableColor(0, 0, 0, 1);
     public static SerializableColor Red => new SerializableColor(1, 0, 0, 1);

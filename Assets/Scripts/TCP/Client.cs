@@ -31,12 +31,11 @@ public class Client : MonoBehaviour
 
     private void Start()
     {
-        Data.AddData<Client>(DataKey.CLIENT, this);
-        ActionBlackBoard.AddData<Action<Guid>>(DataKey.ACTION_SET_ID, SetId);
+        CreateData();
     }
-
-    private void Update()
+    private void OnDestroy()
     {
+        ClearData();
     }
 
     private void OnApplicationQuit()
@@ -57,6 +56,22 @@ public class Client : MonoBehaviour
     {
         IpServer = ip_;
         Data.SetData(DataKey.SERVER_IP, IpServer);
+    }
+
+    #endregion
+
+    #region Blackboard Data
+
+    private void CreateData()
+    {
+        Data.AddData<Client>(DataKey.CLIENT, this);
+        ActionBlackBoard.AddData<Action<Guid>>(DataKey.ACTION_SET_ID, SetId);
+    }
+
+    private void ClearData()
+    {
+        Data.ClearData(DataKey.CLIENT);
+        ActionBlackBoard.ClearData(DataKey.ACTION_SET_ID);
     }
 
     #endregion

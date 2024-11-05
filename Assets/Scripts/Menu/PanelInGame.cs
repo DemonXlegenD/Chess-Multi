@@ -7,11 +7,16 @@ public class PanelInGame : MonoBehaviour
     [SerializeField] private RectTransform whiteTurnTextRect;
     [SerializeField] private RectTransform blackTurnTextRect;
 
+    #region MonoBehaviors
     private void Start()
     {
         whiteTurnTextRect.gameObject.SetActive(true);
         blackTurnTextRect.gameObject.SetActive(false);
     }
+
+    #endregion
+
+    #region Change
 
     public void SwitchTurn()
     {
@@ -24,4 +29,6 @@ public class PanelInGame : MonoBehaviour
         whiteTurnTextRect.gameObject.SetActive(isWhiteMove);
         blackTurnTextRect.gameObject.SetActive(!isWhiteMove);
     }
+
+    #endregion
 }

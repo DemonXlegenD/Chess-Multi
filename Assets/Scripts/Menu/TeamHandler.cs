@@ -16,17 +16,12 @@ public class TeamHandler : MonoBehaviour
     private List<string> spectatorList = new List<string>();
     private string whitePlayer = "";
     private string blackPlayer = "";
-    public Action<TeamRequestResult> action;
+
+    #region MonoBehaviors
 
     void Start()
     {
-        Data.AddData<bool>(DataKey.IS_WHITE, false);
-        Data.AddData<bool>(DataKey.IS_BLACK, false);
-        Data.AddData<bool>(DataKey.IS_SPECTATOR, false);
-
-        action = TeamRequestServerAnswer;
-        ActionBlackBoard.AddData<Action<TeamRequestResult>>(DataKey.ACTION_TEAM_REQUEST, action);
-
+        CreateData();
         ResetTeams();
     }
 
@@ -39,6 +34,37 @@ public class TeamHandler : MonoBehaviour
         }
 
     }
+
+    private void OnDestroy()
+    {
+        
+    }
+
+    #endregion
+
+    #region Blackboard Data
+
+    private void CreateData()
+    {
+        Data.AddData<bool>(DataKey.IS_WHITE, false);
+        Data.AddData<bool>(DataKey.IS_BLACK, false);
+        Data.AddData<bool>(DataKey.IS_SPECTATOR, false);
+
+        ActionBlackBoard.AddData<Action<TeamRequestResult>>(DataKey.ACTION_TEAM_REQUEST, TeamRequestServerAnswer);
+    }
+
+    private void ClearData()
+    {
+        Data.ClearData(DataKey.IS_WHITE);
+        Data.ClearData(DataKey.IS_BLACK);
+        Data.ClearData(DataKey.IS_SPECTATOR);
+
+        ActionBlackBoard.ClearData(DataKey.ACTION_TEAM_REQUEST);
+    }
+
+    #endregion
+
+    #region Teams
 
     public void ResetTeams() 
     {
@@ -77,6 +103,10 @@ public class TeamHandler : MonoBehaviour
             }
         }
     }
+
+    #endregion
+
+    #region Info
 
     public void AskServerToJoinWhite() 
     {
@@ -138,6 +168,10 @@ public class TeamHandler : MonoBehaviour
         }  
     }
 
+    #endregion
+
+    #region Actions
+
     public void JoinWhite(string playerName)
     {
         LeaveSpectator(playerName);
@@ -175,6 +209,10 @@ public class TeamHandler : MonoBehaviour
     {
         spectatorList.Remove(playerName);
     }
+
+    #endregion
+
+    #region UI
 
     private void UpdateText()
     {
@@ -215,6 +253,9 @@ public class TeamHandler : MonoBehaviour
         SpectatorTeamPlayersOne.text = t1;
         SpectatorTeamPlayersTwo.text = t2;
     }
+
+    #endregion
+
 }
 
 
@@ -254,6 +295,8 @@ public class TeamRequest : Data
     }
 }
 
+
+#region Enums & Structs
 public enum Teams
 {
     TEAM_WHITE,
@@ -279,3 +322,5 @@ public struct TeamRequestResult
         JoinOrLeave = joinOrLeave;
     }
 }
+
+#endregion

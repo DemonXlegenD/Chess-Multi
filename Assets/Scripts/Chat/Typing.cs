@@ -8,14 +8,7 @@ public class Typing : MonoBehaviour
     [SerializeField] private Chat chat;
     [SerializeField] private Client client;
 
-    void Start()
-    {
-    }
-
-    private void Update()
-    {
-
-    }
+    #region Action
 
     public void SendMessageToChat(string _content)
     {
@@ -30,10 +23,10 @@ public class Typing : MonoBehaviour
 
                 Package package = new Package(header, chat_message);
 
-
                 client.SendDataToServer(DataSerialize.SerializeToBytes(package));
             }
         }
-
     }
+
+    #endregion
 }

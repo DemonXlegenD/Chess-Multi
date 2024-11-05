@@ -21,16 +21,13 @@ public class GameManager : MonoBehaviour
     private bool wantToInstantiate = false;
     [SerializeField] ChessGameManager chessGameManagerPrefab;
     private ChessGameManager chessGameManager = null;
-    [SerializeField] private Camera camera;
+    [SerializeField] private Camera mainCamera;
+
+    #region MonoBehaviors
 
     private void Start()
     {
         blackBoard.AddData<GameManager>(DataKey.GAME_MANAGER, Instance);
-    }
-
-    public void OnStartGame()
-    {
-        wantToInstantiate = true;
     }
 
     private void Update()
@@ -39,13 +36,25 @@ public class GameManager : MonoBehaviour
         {
             chessGameManager = Instantiate(chessGameManagerPrefab, null);
             if (blackBoard.GetValue<bool>(DataKey.IS_BLACK)) {
-                camera.transform.position = BlackCamera.position;
-                camera.transform.rotation = BlackCamera.rotation;
+                mainCamera.transform.position = BlackCamera.position;
+                mainCamera.transform.rotation = BlackCamera.rotation;
             } else {
-                camera.transform.position = WhiteCamera.position;
-                camera.transform.rotation = WhiteCamera.rotation;
+                mainCamera.transform.position = WhiteCamera.position;
+                mainCamera.transform.rotation = WhiteCamera.rotation;
             }
             wantToInstantiate = false;
         }
+    }
+
+    private void OnDestroy()
+    {
+        blackBoard.ClearData(DataKey.GAME_MANAGER);
+    }
+
+    #endregion
+
+    public void OnStartGame()
+    {
+        wantToInstantiate = true;
     }
 }

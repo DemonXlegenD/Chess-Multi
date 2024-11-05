@@ -35,35 +35,7 @@ public class BlackBoard : ScriptableObject
     public void AddData<T>(DataKey key, T y)
     {
         TypeMapping.AddValueType(key, typeof(T));
-        if(!Data.ContainsKey(key)) Data.Add(key, y);
-    }
-
-    public object GetData(DataKey key)
-    {
-        if (Data.TryGetValue(key, out object value))
-        {
-            if (TypeMapping.typeMapping.TryGetValue(key, out Type expectedType))
-            {
-                if (value.GetType() == expectedType)
-                {
-                    return value;
-                }
-                else
-                {
-                    Debug.LogError($"La valeur pour la cl� '{key}' est de type {value.GetType()}, mais {expectedType} �tait attendu.");
-                    return null;
-                }
-            }
-            else
-            {
-                Debug.LogError($"Type non trouv� pour la cl� '{key}' dans le mapping.");
-                return null;
-            }
-        }
-        else
-        {
-            return null;
-        }
+        if (!Data.ContainsKey(key)) Data.Add(key, y);
     }
 
     public T GetValue<T>(DataKey key)
@@ -103,6 +75,19 @@ public class BlackBoard : ScriptableObject
         else
         {
             return default;
+        }
+    }
+
+    public void ClearData(DataKey key)
+    {
+        if (ContainsData(key))
+        {
+            Data.Remove(key);
+
+        }
+        if (TypeMapping.typeMapping.ContainsKey(key))
+        {
+            TypeMapping.typeMapping.Remove(key);
         }
     }
 
