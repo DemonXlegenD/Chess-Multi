@@ -57,4 +57,9 @@ public class GameManager : MonoBehaviour
     {
         wantToInstantiate = true;
     }
+
+    public void OnEndGame()
+    {
+        Destroy(chessGameManager);
+    }
 }

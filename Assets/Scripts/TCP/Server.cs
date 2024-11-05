@@ -68,7 +68,7 @@ public class Server : MonoBehaviour
         //SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
         SendDataToAllClients(ServerAction.DoAction(DataKey.ACTION_LEAVE_ROOM));
 
-        Data.ClearData(DataKey.SERVER_IP);
+        Data.ClearData(DataKey.SERVER);
 
         foreach (var client_info in clients.Values)
         {
