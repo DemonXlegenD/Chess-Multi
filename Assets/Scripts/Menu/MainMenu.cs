@@ -111,7 +111,6 @@ public class MainMenu : MonoBehaviour
 
     public void LeaveRoom()
     {
-        
         if (Data.GetValue<bool>(DataKey.IS_HOST) && server != null)
         {
             server.StopServer();
@@ -148,7 +147,7 @@ public class MainMenu : MonoBehaviour
 
     public void TryToConnect()
     {
-        ChangeMenu(MainMenuConnectionFail);
+        ChangeMenu(MainMenuWaitForConnection);
         ProcessConnectClient(ConnectToIP.text);
     }
 
