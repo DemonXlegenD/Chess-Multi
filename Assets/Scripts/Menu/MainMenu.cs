@@ -203,9 +203,9 @@ public class MainMenu : MonoBehaviour
     {
         Invoke("UpdateIP", 1);
         teamHandler.ResetTeams();
-        AskRoomInfo();
         ChangeMenu(MainMenuRoom);
         Chat.localScale = on;
+        Invoke("AskRoomInfo", 1);
     }
 
     void UpdateIP()
