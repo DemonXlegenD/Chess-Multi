@@ -272,8 +272,8 @@ public class Server : MonoBehaviour
                 }
                 else if (package.Data is RoomInfoData room_info)
                 {
-                    room_info.BlackPlayerNickname = BlackPlayerID;
-                    room_info.WhitePlayerNickname = WhitePlayerID;
+                    room_info.BlackPlayerNickname = BlackPlayerNickname;
+                    room_info.WhitePlayerNickname = WhitePlayerNickname;
                     _data = DataSerialize.SerializeToBytes(package);
                     SendDataToClient(_clientId, _data);
                 }
@@ -296,13 +296,13 @@ public class Server : MonoBehaviour
                 if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
                 {
                     WhitePlayerID = _clientId;
-                    WhitePlayerNickname = package.Header.Pseudo;
+                    WhitePlayerNickname = _package.Header.Pseudo;
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
                 {
                     BlackPlayerID = _clientId;
-                    BlackPlayerNickname = package.Header.Pseudo;
+                    BlackPlayerNickname = _package.Header.Pseudo;
                     SendDataToAllClients(_data);
                 }
             }
