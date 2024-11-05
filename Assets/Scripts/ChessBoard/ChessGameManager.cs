@@ -171,7 +171,6 @@ public partial class ChessGameManager : MonoBehaviour
 
     public void PlayTurn(Move move)
     {
-
         needToUpdatePieces = true;
         BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
         if (result == BoardState.EMoveResult.Promotion)
