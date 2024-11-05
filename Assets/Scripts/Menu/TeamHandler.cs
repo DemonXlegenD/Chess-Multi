@@ -17,6 +17,9 @@ public class TeamHandler : MonoBehaviour
     private string whitePlayer = "";
     private string blackPlayer = "";
 
+    private Guid WhiteTeamPlayerID = Guid.Empty;
+    private Guid BlackTeamPlayerID = Guid.Empty;
+
     #region MonoBehaviors
 
     void Start()
@@ -30,6 +33,7 @@ public class TeamHandler : MonoBehaviour
         if (shouldUpdate) 
         {
             UpdateText();
+            //UpdateTeams();
             shouldUpdate = false;
         }
 
@@ -111,21 +115,9 @@ public class TeamHandler : MonoBehaviour
 
     private void SetTeamInfo(Guid white_player_id, Guid black_player_id)
     {
-        if (white_player_id == Data.GetValue<Client>(DataKey.CLIENT).Id)
-        {
-            Data.SetData(DataKey.IS_WHITE, true);
-            Data.SetData(DataKey.IS_SPECTATOR, false);
-            Data.SetData(DataKey.IS_BLACK, false);
-        } else if (black_player_id == Data.GetValue<Client>(DataKey.CLIENT).Id)
-        {
-            Data.SetData(DataKey.IS_BLACK, true);
-            Data.SetData(DataKey.IS_SPECTATOR, false);
-            Data.SetData(DataKey.IS_WHITE, false);
-        } else {
-            Data.SetData(DataKey.IS_WHITE, false);
-            Data.SetData(DataKey.IS_BLACK, false);
-            Data.SetData(DataKey.IS_SPECTATOR, true);
-        }
+        WhiteTeamPlayerID = white_player_id;
+        BlackTeamPlayerID = black_player_id;
+        shouldUpdate = true;
     }
 
     private void AskTeamInfo()
@@ -210,32 +202,32 @@ public class TeamHandler : MonoBehaviour
     {
         LeaveSpectator(playerName);
         whitePlayer = playerName;
+        //AskTeamInfo();
         shouldUpdate = true;
-        AskTeamInfo();
     }
 
     public void JoinBlack(string playerName)
     {
         LeaveSpectator(playerName);
         blackPlayer = playerName; 
+        //AskTeamInfo();
         shouldUpdate = true;
-        AskTeamInfo();
     }
 
     private void LeaveWhite(string playerName)
     {
         whitePlayer = "";
         JoinSpectator(playerName);
+        //AskTeamInfo();
         shouldUpdate = true;
-        AskTeamInfo();
     }
 
     private void LeaveBlack(string playerName)
     {
         blackPlayer = "";
         JoinSpectator(playerName);
+        //AskTeamInfo();
         shouldUpdate = true;
-        AskTeamInfo();
     }
 
     private void JoinSpectator(string playerName)
@@ -252,6 +244,30 @@ public class TeamHandler : MonoBehaviour
 
     #region UI
 
+    private void UpdateTeams() 
+    {
+        if (Data.GetValue<Client>(DataKey.CLIENT) != null) 
+        {
+            Debug.Log("EXISTE");
+            if (WhiteTeamPlayerID == Data.GetValue<Client>(DataKey.CLIENT).Id)
+            {
+                Data.SetData(DataKey.IS_WHITE, true);
+                Data.SetData(DataKey.IS_SPECTATOR, false);
+                Data.SetData(DataKey.IS_BLACK, false);
+            } else if (BlackTeamPlayerID == Data.GetValue<Client>(DataKey.CLIENT).Id)
+            {
+                Debug.Log("IS BLACK");
+                Data.SetData(DataKey.IS_BLACK, true);
+                Data.SetData(DataKey.IS_SPECTATOR, false);
+                Data.SetData(DataKey.IS_WHITE, false);
+            } else {
+                Data.SetData(DataKey.IS_WHITE, false);
+                Data.SetData(DataKey.IS_BLACK, false);
+                Data.SetData(DataKey.IS_SPECTATOR, true);
+            }
+        }
+        Debug.Log("EXISTE PAS");
+    }
     private void UpdateText()
     {
         string t1 = "";

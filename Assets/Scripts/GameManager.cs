@@ -34,14 +34,17 @@ public class GameManager : MonoBehaviour
     {
         if (wantToInstantiate && chessGameManager == null)
         {
-            chessGameManager = Instantiate(chessGameManagerPrefab, null);
             if (blackBoard.GetValue<bool>(DataKey.IS_BLACK)) {
+                Debug.Log("IS BLACK");
                 mainCamera.transform.position = BlackCamera.position;
                 mainCamera.transform.rotation = BlackCamera.rotation;
             } else {
+                Debug.Log("IS WHITE OR SPEC");
                 mainCamera.transform.position = WhiteCamera.position;
                 mainCamera.transform.rotation = WhiteCamera.rotation;
             }
+
+            chessGameManager = Instantiate(chessGameManagerPrefab, null);
             wantToInstantiate = false;
         }
     }
