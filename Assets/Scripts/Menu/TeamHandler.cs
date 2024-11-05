@@ -196,6 +196,22 @@ public class TeamHandler : MonoBehaviour
         WhiteTeamPlayer.text = whitePlayer;
         BlackTeamPlayer.text = blackPlayer;
 
+        if (whitePlayer == Data.GetValue<string>(DataKey.PLAYER_NICKNAME)) 
+        {
+            Data.SetData(DataKey.IS_WHITE, true);
+            Data.SetData(DataKey.IS_SPECTATOR, false);
+            Data.SetData(DataKey.IS_BLACK, false);
+        } else if (blackPlayer == Data.GetValue<string>(DataKey.PLAYER_NICKNAME))
+        {
+            Data.SetData(DataKey.IS_BLACK, true);
+            Data.SetData(DataKey.IS_SPECTATOR, false);
+            Data.SetData(DataKey.IS_WHITE, false);
+        } else {
+            Data.SetData(DataKey.IS_WHITE, false);
+            Data.SetData(DataKey.IS_BLACK, false);
+            Data.SetData(DataKey.IS_SPECTATOR, true);
+        }
+
         SpectatorTeamPlayersOne.text = t1;
         SpectatorTeamPlayersTwo.text = t2;
     }
