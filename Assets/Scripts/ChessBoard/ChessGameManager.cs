@@ -179,9 +179,28 @@ public partial class ChessGameManager : MonoBehaviour
         BoardState.EMoveResult result = boardState.PlayUnsafeMove(move);
         if (result == BoardState.EMoveResult.Promotion)
         {
-            // instantiate promoted queen gameobject
             positionQueen = move.to;
-            //AddQueenAtPos(move.to);
+        }
+    }
+
+    private void UpdateTeams()
+    {
+        EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
+        if (boardState.DoesTeamLose(otherTeam))
+        {
+            // increase score and reset board
+            scores[(int)teamTurn]++;
+            if (OnScoreUpdated != null)
+                OnScoreUpdated(scores[0], scores[1]);
+
+            PrepareGame(false);
+            // remove extra piece instances if pawn promotions occured
+            teamPiecesArray[0].ClearPromotedPieces();
+            teamPiecesArray[1].ClearPromotedPieces();
+        }
+        else
+        {
+            teamTurn = otherTeam;
         }
     }
 
@@ -345,30 +364,11 @@ public partial class ChessGameManager : MonoBehaviour
 
             if (needToUpdatePieces)
             {
-                if (positionQueen != -1)
-                {
-                    AddQueenAtPos(positionQueen);
-                    positionQueen = -1;
-                }
+  
                 UpdatePieces();
+                UpdateTeams();
 
-                EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
-                if (boardState.DoesTeamLose(otherTeam))
-                {
-                    // increase score and reset board
-                    scores[(int)teamTurn]++;
-                    if (OnScoreUpdated != null)
-                        OnScoreUpdated(scores[0], scores[1]);
 
-                    PrepareGame(false);
-                    // remove extra piece instances if pawn promotions occured
-                    teamPiecesArray[0].ClearPromotedPieces();
-                    teamPiecesArray[1].ClearPromotedPieces();
-                }
-                else
-                {
-                    teamTurn = otherTeam;
-                }
 
                 if (OnPlayerTurn != null)
                     OnPlayerTurn(teamTurn == EChessTeam.White);
@@ -472,6 +472,12 @@ public partial class ChessGameManager : MonoBehaviour
 
     void UpdatePieces()
     {
+        if (positionQueen != -1)
+        {
+            AddQueenAtPos(positionQueen);
+            positionQueen = -1;
+        }
+
         teamPiecesArray[0].Hide();
         teamPiecesArray[1].Hide();
 
