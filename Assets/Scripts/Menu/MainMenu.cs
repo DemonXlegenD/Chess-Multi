@@ -151,10 +151,10 @@ public class MainMenu : MonoBehaviour
         if (Data.GetValue<bool>(DataKey.IS_HOST) && server != null)
         {
             server.StopServer();
-            Destroy(server.gameObject);
+            if (server) Destroy(server.gameObject);
         }
         
-        Destroy(client.gameObject);
+        if(client) Destroy(client.gameObject);
 
         ChangeMenu(MainMenuStart);
         Chat.localScale = off;
