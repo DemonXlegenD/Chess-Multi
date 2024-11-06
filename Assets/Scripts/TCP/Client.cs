@@ -197,7 +197,7 @@ public class Client : MonoBehaviour
             Debug.Log("PROCESSING");
             Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
 
-            package.Data.CallAction(ActionBlackBoard, package.Header, package.Header);
+            package.Data.CallAction(ActionBlackBoard, (IPlayerPseudo)package.Header, (ITimestamp)package.Header);
         }
         catch
         {
