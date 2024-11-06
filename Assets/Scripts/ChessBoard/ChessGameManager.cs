@@ -363,15 +363,15 @@ public partial class ChessGameManager : MonoBehaviour
 
             if (needToUpdatePieces)
             {
+                if (positionQueen != -1)
+                {
+                    AddQueenAtPos(positionQueen);
+                    positionQueen = -1;
+                }
                 UpdatePieces();
                 if (OnPlayerTurn != null)
                     OnPlayerTurn(teamTurn == EChessTeam.White);
                 needToUpdatePieces = false;
-            }
-
-            if(positionQueen != -1) { 
-                AddQueenAtPos(positionQueen);
-                positionQueen = -1;
             }
         }
 
