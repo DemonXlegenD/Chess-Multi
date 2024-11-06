@@ -33,6 +33,20 @@ public partial class ChessGameManager
             pieceTypeArray[(uint)type] = pieces;
         }
 
+        public void Clear()
+        {
+            foreach (GameObject[] pieces in pieceTypeArray)
+            {
+                foreach (GameObject piece in pieces)
+                {
+                    if (piece != null)
+                    {
+                        Destroy(piece);
+                    }
+                }
+            }
+        }
+
         public void ClearPromotedPieces()
         {
             GameObject[] pieces = new GameObject[1];

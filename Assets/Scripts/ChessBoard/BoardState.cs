@@ -438,7 +438,7 @@ public partial class ChessGameManager
         {
             for (int i = 0; i < squares.Count; ++i)
             {
-                SetPieceAtSquare(i, EChessTeam.None, EPieceType.None);
+                BoardSquare.Empty();
             }
         }
     }

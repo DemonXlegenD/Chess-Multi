@@ -473,6 +473,9 @@ public partial class ChessGameManager : MonoBehaviour
         scores.Add(0);
 
         boardState.ClearPieces();
+
+        teamPiecesArray[0].Clear();
+        teamPiecesArray[1].Clear();
     }
 
     #endregion
