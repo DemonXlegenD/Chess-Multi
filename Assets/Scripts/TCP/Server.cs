@@ -182,20 +182,17 @@ public class Server : MonoBehaviour
                 catch (IOException e)
                 {
                     Debug.Log("Client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + " disconnected (IOException): " + e.Message);
-                    SendDataToAllClients(ServerAction.Log($"Client {(clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id)} left the party"));
                     break;
                 }
                 catch (ObjectDisposedException)
                 {
                     Debug.Log("Client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + " disconnected: Stream closed.");
-                    SendDataToAllClients(ServerAction.Log($"Client {(clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id)} left the party"));
                     break;
                 }
 
                 if (bytesRead == 0) // 0 bytes read means the client has disconnected
                 {
                     Debug.Log("Client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + " disconnected (0 bytes read).");
-                    SendDataToAllClients(ServerAction.Log($"Client {(clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id)} left the party"));
                     break;
                 }
 
@@ -218,7 +215,7 @@ public class Server : MonoBehaviour
 
             if (isServerRunning)
             {
-                SendDataToAllClients(ServerAction.Log($"Client {clientInfo.Id} left the party")); // Send to everyone that the server is closing so they have to close too
+                SendDataToAllClients(ServerAction.Log($"Client {(clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id)} left the party")); // Send to everyone that the server is closing so they have to close too
             }
         }
     }
