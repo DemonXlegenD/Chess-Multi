@@ -80,7 +80,6 @@ public class MainMenu : MonoBehaviour
     public void CreateData()
     {
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
-        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
         ActionBlackBoard.AddData<Action<string, string>>(DataKey.ACTION_ROOM_INFO, SetRoomInfo);
 
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);

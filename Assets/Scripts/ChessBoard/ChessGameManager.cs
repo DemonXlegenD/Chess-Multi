@@ -71,7 +71,7 @@ public struct Move
     {
         try
         {
-            return (bool)(this == (Move)o);
+            return this == (Move)o;
         }
         catch
         {
@@ -206,9 +206,11 @@ public partial class ChessGameManager : MonoBehaviour
         teamTurn = EChessTeam.White;
         if (scores == null)
         {
-            scores = new List<uint>();
-            scores.Add(0);
-            scores.Add(0);
+            scores = new List<uint>
+            {
+                0,
+                0
+            };
         }
         if (resetScore)
         {
@@ -234,7 +236,7 @@ public partial class ChessGameManager : MonoBehaviour
         EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
         if (boardState.DoesTeamLose(otherTeam))
         {
-            if (blackBoard.GetValue<bool>(DataKey.IS_HOST)) 
+            if (blackBoard.GetValue<bool>(DataKey.IS_HOST))
             {
                 AskToEnd();
             }
@@ -279,8 +281,8 @@ public partial class ChessGameManager : MonoBehaviour
     {
         Vector3 piecePos = boardTransform.position;
         piecePos.y += zOffset;
-        piecePos.x = -widthOffset + pos % BOARD_SIZE;
-        piecePos.z = -widthOffset + pos / BOARD_SIZE;
+        piecePos.x = -widthOffset + (pos % BOARD_SIZE);
+        piecePos.z = -widthOffset + (pos / BOARD_SIZE);
 
         return piecePos;
     }
@@ -290,7 +292,7 @@ public partial class ChessGameManager : MonoBehaviour
         int xPos = Mathf.FloorToInt(worldPos.x + widthOffset) % BOARD_SIZE;
         int zPos = Mathf.FloorToInt(worldPos.z + widthOffset);
 
-        return xPos + zPos * BOARD_SIZE;
+        return xPos + (zPos * BOARD_SIZE);
     }
 
     #endregion
@@ -322,15 +324,17 @@ public partial class ChessGameManager : MonoBehaviour
         blackClientId = black_player_id;
         whiteClientId = white_player_id;
         whitePseudo = white_player_pseudo;
-        blackPseudo = black_player_pseudo;    
+        blackPseudo = black_player_pseudo;
     }
 
     private void AskToMove(Move move)
     {
         Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
 
-        MoveData moveData = new MoveData(DataKey.ACTION_PLAY_MOVE);
-        moveData.Move = move;
+        MoveData moveData = new MoveData(DataKey.ACTION_PLAY_MOVE)
+        {
+            Move = move
+        };
 
         Package package = Package.CreatePackage(header, moveData);
 
@@ -434,7 +438,7 @@ public partial class ChessGameManager : MonoBehaviour
 
             if (needToUpdatePieces)
             {
-  
+
                 UpdatePieces();
                 UpdateTeams();
 
@@ -463,6 +467,12 @@ public partial class ChessGameManager : MonoBehaviour
     private void OnDestroy()
     {
         ClearData();
+
+        scores.Clear();
+        scores.Add(0);
+        scores.Add(0);
+
+        boardState.ClearPieces();
     }
 
     #endregion
@@ -547,8 +557,8 @@ public partial class ChessGameManager : MonoBehaviour
                 // set position
                 Vector3 piecePos = boardTransform.position;
                 piecePos.y += zOffset;
-                piecePos.x = -widthOffset + crtPos % BOARD_SIZE;
-                piecePos.z = -widthOffset + crtPos / BOARD_SIZE;
+                piecePos.x = -widthOffset + (crtPos % BOARD_SIZE);
+                piecePos.z = -widthOffset + (crtPos / BOARD_SIZE);
                 crtPiece.transform.position = piecePos;
             }
             crtPos++;
@@ -617,20 +627,23 @@ public partial class ChessGameManager : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, maxDistance, boardLayerMask))
             {
-                grabbed.root.position = hit.transform.position + Vector3.up * zOffset;
+                grabbed.root.position = hit.transform.position + (Vector3.up * zOffset);
             }
 
             destPos = GetBoardPos(grabbed.root.position);
             if (startPos != destPos)
             {
-                Move move = new Move();
-                move.from = startPos;
-                move.to = destPos;
+                Move move = new Move
+                {
+                    from = startPos,
+                    to = destPos
+                };
 
                 if (boardState.IsValidMove(teamTurn, move))
                 {
                     AskToMove(move);
-                } else
+                }
+                else
                 {
                     UpdatePieces();
                 }

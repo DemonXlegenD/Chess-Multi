@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -18,10 +19,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Transform WhiteCamera;
     [SerializeField] private Transform BlackCamera;
     [SerializeField] private BlackBoard blackBoard;
+    [SerializeField] private BlackBoard ActionBlackBoard;
     private bool wantToInstantiate = false;
     [SerializeField] ChessGameManager chessGameManagerPrefab;
     private ChessGameManager chessGameManager = null;
     [SerializeField] private Camera mainCamera;
+
+    private bool needToLeave = false;
 
     #region MonoBehaviors
 
@@ -29,6 +33,7 @@ public class GameManager : MonoBehaviour
     {
         Application.runInBackground = true;
         blackBoard.AddData<GameManager>(DataKey.GAME_MANAGER, Instance);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_LEAVE_ROOM, AskForLeaving);
     }
 
     private void Update()
@@ -48,14 +53,26 @@ public class GameManager : MonoBehaviour
             chessGameManager = Instantiate(chessGameManagerPrefab, null);
             wantToInstantiate = false;
         }
+
+        if (needToLeave)
+        {
+            OnLeaveGame();
+            needToLeave = false;
+        }
     }
 
     private void OnDestroy()
     {
         blackBoard.ClearData(DataKey.GAME_MANAGER);
+        ActionBlackBoard.ClearData(DataKey.ACTION_LEAVE_ROOM);
     }
 
     #endregion
+
+    public void AskForLeaving()
+    {
+        needToLeave = true;
+    }
 
     public void OnStartGame()
     {
