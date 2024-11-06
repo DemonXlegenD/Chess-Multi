@@ -33,6 +33,14 @@ public class Client : MonoBehaviour
     {
         CreateData();
     }
+
+    private void Update()
+    {
+        if(id == Guid.Empty)
+        {
+            SendPackageId();
+        }
+    }
     private void OnDestroy()
     {
         ClearData();
@@ -80,10 +88,7 @@ public class Client : MonoBehaviour
 
     public void StartRunningClient()
     {
-        clientReceiveThread = new Thread(ListenForData)
-        {
-            IsBackground = true
-        };
+        clientReceiveThread = new Thread(ListenForData);
         clientReceiveThread.Start();
     }
 
@@ -195,11 +200,11 @@ public class Client : MonoBehaviour
             Debug.Log("PROCESSING");
             Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
 
-            package.Data.CallAction(ActionBlackBoard, package.Header, package.Header);
+            package.Data.CallAction(ActionBlackBoard, (IPlayerPseudo)package.Header, (ITimestamp)package.Header);
         }
         catch
         {
-            Debug.Log("ID");
+            Debug.LogWarning("Fail Process Data");
         }
     }
 
