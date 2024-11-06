@@ -56,7 +56,7 @@ public class Server : MonoBehaviour
 
     public void StartServer()
     {
-        serverThread = new Thread(SetupServer);
+        serverThread = new Thread(SetupServer); 
         serverThread.Start();
     }
 
@@ -100,9 +100,9 @@ public class Server : MonoBehaviour
         try
         {
             Id = Guid.NewGuid();
-            IpV4 = GetLocalIPAddress();
+            IpV4 = GetLocalIPAddress(); // Get IP that clients are going to use to join
             IPAddress localAddr = IPAddress.Parse(IpV4);
-            server = new TcpListener(localAddr, serverPort);
+            server = new TcpListener(localAddr, serverPort); // Start the TCP listener
             server.Start();
 
             Name = $"Server";
@@ -114,10 +114,10 @@ public class Server : MonoBehaviour
                 //Check Clients Waiting To Connect
                 if (server.Pending())
                 {
-                    TcpClient client = server.AcceptTcpClient();
+                    TcpClient client = server.AcceptTcpClient(); // Accept clients
 
-                    Guid clientId = Guid.NewGuid();
-                    var clientInfo = new ClientInfo
+                    Guid clientId = Guid.NewGuid(); // Create a new ID
+                    var clientInfo = new ClientInfo // Create a new client struct
                     {
                         Id = clientId,
                         pseudo = string.Empty,
@@ -126,11 +126,11 @@ public class Server : MonoBehaviour
                         ConnectionTimestamp = System.DateTime.Now.ToString()
                     };
 
-                    clients.Add(clientId, clientInfo);
+                    clients.Add(clientId, clientInfo); // Add it to the client list
 
-                    SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
+                    SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}")); // Tell everyone that a new client logged in
 
-                    Thread clientThread = new Thread(() => HandleClient(clientInfo));
+                    Thread clientThread = new Thread(() => HandleClient(clientInfo)); // Start the thread that listen for this client msg
                     clientThread.Start();
                 }
 
@@ -199,7 +199,7 @@ public class Server : MonoBehaviour
                 data = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimEnd('\0');
                 Debug.Log("SERVER : Received from client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + ": " + data);
 
-                DataProcessing(buffer, clientInfo.Id);
+                DataProcessing(buffer, clientInfo.Id); // Process incoming data
             }
         }
         catch (SocketException e)
@@ -215,16 +215,16 @@ public class Server : MonoBehaviour
 
             if (isServerRunning)
             {
-                SendDataToAllClients(ServerAction.Log($"Client {clientInfo.Id} left the party"));
+                SendDataToAllClients(ServerAction.Log($"Client {clientInfo.Id} left the party")); // Send to everyone that the server is closing so they have to close too
             }
         }
     }
 
     #region Data
 
-    public void DataProcessing(byte[] _data, Guid _clientId)
+    public void DataProcessing(byte[] _data, Guid _clientId) // Process incoming data
     {
-        Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
+        Package package = DataSerialize.DeserializeFromBytes<Package>(_data); // Deserialize incoming data From Bytes
 
         if (clients[_clientId].pseudo == string.Empty)
         {
@@ -233,27 +233,29 @@ public class Server : MonoBehaviour
 
         switch (package.Header.SendMethod)
         {
-            case SendMethod.OPPONENT:
-                Debug.Log("Opponent");
+            case SendMethod.OPPONENT: // If the package is for the opponent
+                Debug.Log("Opponent"); // Not handle yet
                 break;
-            case SendMethod.ONLY_CLIENT:
+            case SendMethod.ONLY_CLIENT: // If the package is for himself
                 Package new_package = new Package();
-                if (package.Data is IdRequest id_request)
+                if (package.Data is IdRequest id_request) // If it's a request for the id (first package exchanged when client logged in)
                 {
                     Header header = package.Header;
                     header.Id = _clientId;
                     package.Header = header;
-                    id_request.Id = _clientId;
+
+                    id_request.Id = _clientId; // Set the client ID in the package 
                     Debug.LogWarning("Debug ID : " + id_request.Id);
                     new_package = Package.CreatePackage(header, id_request);
                 }
-                else if (package.Data is ChessInfoGameData chess_info_game_data)
+                else if (package.Data is ChessInfoGameData chess_info_game_data) // If client ask for the game info
                 {
-
                     chess_info_game_data.BlackPlayerId = BlackPlayerID;
                     chess_info_game_data.WhitePlayerId = WhitePlayerID;
+
                     chess_info_game_data.WhitePlayerPseudo = WhitePlayerNickname;
                     chess_info_game_data.BlackPlayerPseudo = BlackPlayerNickname;
+
                     new_package = Package.CreatePackage(package.Header, chess_info_game_data);
                 }
                 else
@@ -261,81 +263,84 @@ public class Server : MonoBehaviour
                     new_package = package;  
                 }
 
-                SendDataToClient(_clientId, DataSerialize.SerializeToBytes(new_package));
+                SendDataToClient(_clientId, DataSerialize.SerializeToBytes(new_package)); // Send it back
                 Debug.Log("Only client");
                 break;
-            case SendMethod.ALL_CLIENTS:
+            case SendMethod.ALL_CLIENTS: // If the package is for everyone
                 Debug.Log("AllClient");
-                SendDataToAllClients(_data);
+                SendDataToAllClients(_data); // Send it to everyone
                 break;
-            case SendMethod.ONLY_SERVER:
+            case SendMethod.ONLY_SERVER: // If it's for the server 
                 Debug.Log("ONLY_SERVER");
-                HandleTeamRequest(package, _clientId, _data); // Leave or join team
-                if (package.Data is ChessManagerRequest chess_manager_request) // Start game
+                if (package.Data is TeamRequest team_request) // Team request is a special resquest sent when a client ask to join a team (black or white)
+                {
+                    HandleTeamRequest(package, team_request, _clientId, _data); // Handle leaving or joining a team
+                } else if (package.Data is ChessManagerRequest chess_manager_request) // If the host ask to start the game
                 {
                     if(WhitePlayerID != Guid.Empty && BlackPlayerID != Guid.Empty) 
                     {
-                        SendDataToAllClients(_data);
+                        SendDataToAllClients(_data); // Send to everyone that the game has started
                     }
                 }
-                else if (package.Data is RoomInfoData room_info)
+                else if (package.Data is RoomInfoData room_info) // If the client ask for the black team player's name or white team player's name
                 {
                     room_info.BlackPlayerNickname = BlackPlayerNickname;
                     room_info.WhitePlayerNickname = WhitePlayerNickname;
-                    _data = DataSerialize.SerializeToBytes(package);
-                    SendDataToClient(_clientId, _data);
+
+                    _data = DataSerialize.SerializeToBytes(package); 
+
+                    SendDataToClient(_clientId, _data); // Send it back to the client that was asking
                 }
                 break;
-            case SendMethod.ONLY_SPECTATORS:
+            case SendMethod.ONLY_SPECTATORS: // If it's for the spectators
                 Debug.Log("Spectator");
                 break;
-            default:
+            default: 
                 Debug.Log("None");
                 break;
         }
     }
 
-    private void HandleTeamRequest(Package _package, Guid _clientId, byte[] _data) 
+    private void HandleTeamRequest(Package _package, TeamRequest team_request, Guid _clientId, byte[] _data) // Handle leaving or joining a team
     {
-        if (_package.Data is TeamRequest team_request)
+        if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN) // If the client ask to join a team
         {
-            if (team_request.RequestJoinOrLeave == JoinOrLeave.JOIN)
+            if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
             {
-                if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
-                {
-                    WhitePlayerID = _clientId;
-                    team_request.PlayerID = WhitePlayerID;
-                    WhitePlayerNickname = _package.Header.Pseudo;
-                    _data = DataSerialize.SerializeToBytes(_package);
-                    SendDataToAllClients(_data);
-                }
-                else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
-                {
-                    BlackPlayerID = _clientId;
-                    team_request.PlayerID = BlackPlayerID;
-                    BlackPlayerNickname = _package.Header.Pseudo;
-                    _data = DataSerialize.SerializeToBytes(_package);
-                    SendDataToAllClients(_data);
-                }
+                WhitePlayerID = _clientId; // Save the white player's ID
+                team_request.PlayerID = WhitePlayerID; // Send his ID 
+                WhitePlayerNickname = _package.Header.Pseudo; // Send his nickname
+
+                _data = DataSerialize.SerializeToBytes(_package);
+                SendDataToAllClients(_data); // Tell everyone that this player join white team
             }
-            else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE)
+            else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
             {
-                if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
-                {
-                    WhitePlayerID = Guid.Empty;
-                    WhitePlayerNickname = "";
-                    team_request.PlayerID = WhitePlayerID;
-                    _data = DataSerialize.SerializeToBytes(_package);
-                    SendDataToAllClients(_data);
-                }
-                else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
-                {
-                    BlackPlayerID = Guid.Empty;
-                    BlackPlayerNickname = "";
-                    team_request.PlayerID = BlackPlayerID;
-                    _data = DataSerialize.SerializeToBytes(_package);
-                    SendDataToAllClients(_data);
-                }
+                BlackPlayerID = _clientId;
+                team_request.PlayerID = BlackPlayerID;
+                BlackPlayerNickname = _package.Header.Pseudo;
+                _data = DataSerialize.SerializeToBytes(_package);
+                SendDataToAllClients(_data);
+            }
+        }
+        else if (team_request.RequestJoinOrLeave == JoinOrLeave.LEAVE) // If the client ask to leave a team
+        {
+            if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == _clientId)
+            {
+                WhitePlayerID = Guid.Empty; // Reset the white player's ID
+                WhitePlayerNickname = "";
+                team_request.PlayerID = WhitePlayerID;
+                
+                _data = DataSerialize.SerializeToBytes(_package);
+                SendDataToAllClients(_data);
+            }
+            else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
+            {
+                BlackPlayerID = Guid.Empty;
+                BlackPlayerNickname = "";
+                team_request.PlayerID = BlackPlayerID;
+                _data = DataSerialize.SerializeToBytes(_package);
+                SendDataToAllClients(_data);
             }
         }
     }
@@ -365,7 +370,6 @@ public class Server : MonoBehaviour
                 catch (ObjectDisposedException ex)
                 {
                     Debug.LogError($"Erreur : Le flux pour le client {_clientId} est ferm�.");
-                    // G�rer la d�connexion ici
                 }
                 catch (Exception ex)
                 {
@@ -389,11 +393,11 @@ public class Server : MonoBehaviour
 
     #endregion
 
-    public class ServerAction
+    public class ServerAction 
     {
         static Package package = new Package(new Header(Id, Name, DateTime.Now, SendMethod.ALL_CLIENTS));
 
-        public static byte[] Log(string _message)
+        public static byte[] Log(string _message) // Used to send chat messages from server
         {
             ChatMessage chat_message = new ChatMessage(_message, SerializableColor.Red, DataKey.ACTION_CHAT);
             package.Data = chat_message;
@@ -401,7 +405,7 @@ public class Server : MonoBehaviour
             return DataSerialize.SerializeToBytes(package);
         }
 
-        public static byte[] DoAction(DataKey data_key)
+        public static byte[] DoAction(DataKey data_key) // Used to order clients to do things (leave, start game, etc)
         {
             SimpleAction simple_action = new SimpleAction(data_key);
             package.Data = simple_action;
@@ -412,12 +416,13 @@ public class Server : MonoBehaviour
 }
 
 [Serializable]
-public class SimpleAction : Data
+public class SimpleAction : Data // Used to order clients to do simple things (call actions without args)
 {
     public SimpleAction(DataKey _actionDataKey) : base(_actionDataKey)
     {
 
     }
+
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
         _actionBlackBoard.GetValue<Action>(ActionDataKey)?.Invoke();
@@ -434,7 +439,7 @@ public class SimpleAction : Data
     }
 }
 
-public class ClientInfo
+public class ClientInfo // Struct to save clients data
 {
     public Guid Id { get; set; }
 

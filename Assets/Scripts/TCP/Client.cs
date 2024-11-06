@@ -38,12 +38,12 @@ public class Client : MonoBehaviour
     {
         if(id == Guid.Empty)
         {
-            SendPackageId();
+            SendPackageId(); // Ask server to give us an id
         }
     }
     private void OnDestroy()
     {
-        ClearData();
+        ClearData(); // Clear black board data
     }
 
     private void OnApplicationQuit()
@@ -88,7 +88,7 @@ public class Client : MonoBehaviour
 
     public void StartRunningClient()
     {
-        clientReceiveThread = new Thread(ListenForData);
+        clientReceiveThread = new Thread(ListenForData); // Start the listening thread
         clientReceiveThread.Start();
     }
 
@@ -135,7 +135,7 @@ public class Client : MonoBehaviour
         }
     }
 
-    private void ListenForData()
+    private void ListenForData() 
     {
         byte[] buffer = new byte[1024];
 
@@ -145,14 +145,14 @@ public class Client : MonoBehaviour
             {
                 if (stream.DataAvailable)
                 {
-                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    int bytesRead = stream.Read(buffer, 0, buffer.Length); // Read listening stream
 
                     if (bytesRead > 0)
                     {
                         byte[] incomingData = new byte[bytesRead];
                         Array.Copy(buffer, 0, incomingData, 0, bytesRead);
 
-                        DataProcessing(incomingData);
+                        DataProcessing(incomingData); // Process incoming data
 
                         string serverMessage = Encoding.UTF8.GetString(incomingData);
                         Debug.Log("Server message received: " + serverMessage);
@@ -198,9 +198,9 @@ public class Client : MonoBehaviour
         try
         {
             Debug.Log("PROCESSING");
-            Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
+            Package package = DataSerialize.DeserializeFromBytes<Package>(_data); // Deserialize data From Bytes
 
-            package.Data.CallAction(ActionBlackBoard, (IPlayerPseudo)package.Header, (ITimestamp)package.Header);
+            package.Data.CallAction(ActionBlackBoard, (IPlayerPseudo)package.Header, (ITimestamp)package.Header); // Call the specific action linked to the package
         }
         catch
         {
@@ -208,7 +208,7 @@ public class Client : MonoBehaviour
         }
     }
 
-    public void SendMessageToServer(string message)
+    public void SendMessageToServer(string message) 
     {
         if (client == null || !client.Connected)
         {
@@ -216,7 +216,7 @@ public class Client : MonoBehaviour
             return;
         }
 
-        byte[] data = Encoding.UTF8.GetBytes(message);
+        byte[] data = Encoding.UTF8.GetBytes(message); 
         stream.Write(data, 0, data.Length);
         Debug.Log("Sent message to server: " + message);
     }

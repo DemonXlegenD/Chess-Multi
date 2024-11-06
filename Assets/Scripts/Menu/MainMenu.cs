@@ -12,22 +12,27 @@ public class MainMenu : MonoBehaviour
     [SerializeField] RectTransform MainMenuRoom;
     [SerializeField] RectTransform Chat;
     [SerializeField] RectTransform InGamePanel;
+
     [SerializeField] Server ServerPrefab;
     [SerializeField] Client ClientPrefab;
+
     [SerializeField] BlackBoard Data;
     [SerializeField] BlackBoard ActionBlackBoard;
+
     [SerializeField] TMPro.TMP_InputField NickName;
     [SerializeField] TMPro.TMP_InputField ConnectToIP;
     [SerializeField] TMPro.TextMeshProUGUI IP;
 
     private TeamHandler teamHandler;
-    private RectTransform toChangePanel;
 
+    private RectTransform toChangePanel; // Next panel to display
     private RectTransform currentMenu;
+    
     private Server server = null;
     private Client client = null;
-    Vector3 on = new Vector3(1, 1);
-    Vector3 off = new Vector3(0, 0);
+
+    Vector3 on = new Vector3(1, 1); // Display panel
+    Vector3 off = new Vector3(0, 0); // Do not display panel
 
     bool wantGamePanel = false;
     bool needChangePanel = false;
@@ -54,13 +59,14 @@ public class MainMenu : MonoBehaviour
 
     private void Update()
     {
-        if(currentMenu != InGamePanel && wantGamePanel)
+        // To avoid threading error whith UI :
+        if(currentMenu != InGamePanel && wantGamePanel) // Displaying menu actualisation
         {
             ChangeMenu(InGamePanel);
             wantGamePanel = false;
         }
 
-        if(toChangePanel != currentMenu && needChangePanel)
+        if(toChangePanel != currentMenu && needChangePanel) // Displaying menu actualisation
         {
             Debug.LogWarning("Leave the room");
             LeaveRoom();
@@ -70,7 +76,7 @@ public class MainMenu : MonoBehaviour
 
     private void OnDestroy()
     {
-        ClearData();
+        ClearData(); // Clear blackboard's data
     }
 
     #endregion
@@ -79,8 +85,8 @@ public class MainMenu : MonoBehaviour
 
     public void CreateData()
     {
-        ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost);
-        ActionBlackBoard.AddData<Action<string, string>>(DataKey.ACTION_ROOM_INFO, SetRoomInfo);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_START_GAME_BY_HOST, StartGameAskByHost); // Set action to start the game
+        ActionBlackBoard.AddData<Action<string, string>>(DataKey.ACTION_ROOM_INFO, SetRoomInfo); // Set action to get teams player's ID
 
         Data.AddData<string>(DataKey.PLAYER_NICKNAME, NickName.text);
         Data.AddData<string>(DataKey.SERVER_IP, "0");
@@ -136,7 +142,7 @@ public class MainMenu : MonoBehaviour
     #region Actions
     public void CreateRoom()
     {
-        server = Instantiate(ServerPrefab);
+        server = Instantiate(ServerPrefab); // Become host
         Invoke("HostConnection", 0.1f);
     }
 
@@ -150,7 +156,7 @@ public class MainMenu : MonoBehaviour
     {
         if (Data.GetValue<bool>(DataKey.IS_HOST) && server != null)
         {
-            server.StopServer();
+            server.StopServer(); // Stop server if is host
             if (server) Destroy(server.gameObject);
         }
         
@@ -160,7 +166,7 @@ public class MainMenu : MonoBehaviour
         Chat.localScale = off;
     }
 
-    public void StartGame()
+    public void StartGame() // Send a package to the server that ask him if we can start the game (and start it if we can)
     {
         if (Data.GetValue<bool>(DataKey.IS_HOST))
         {
@@ -168,7 +174,7 @@ public class MainMenu : MonoBehaviour
 
             Header header = new Header(current_client.Id, current_client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
-            ChessManagerRequest request = new ChessManagerRequest(DataKey.ACTION_START_GAME_BY_HOST);
+            ChessManagerRequest request = new ChessManagerRequest(DataKey.ACTION_START_GAME_BY_HOST); 
 
             Package package = Package.CreatePackage(header, request);
 
@@ -192,7 +198,7 @@ public class MainMenu : MonoBehaviour
         ProcessConnectClient(Data.GetValue<string>(DataKey.SERVER_IP));
     }
 
-    public void ProcessConnectClient(string _ip)
+    public void ProcessConnectClient(string _ip) // Instanciate client and try to connect
     {
         Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         client = Instantiate(ClientPrefab);
@@ -209,20 +215,6 @@ public class MainMenu : MonoBehaviour
         {
             FailToConnect();
         }
-    }
-
-    public bool SetUpClientConnection()
-    {
-        client = Instantiate(ClientPrefab);
-        string ip_address = Data.GetValue<string>(DataKey.SERVER_IP);
-
-        if (ip_address == "0")
-        {
-            ip_address = ConnectToIP.text;
-        }
-        client.SetClientIP(ip_address);
-
-        return client.ConnectToServer();
     }
 
     public void FailToConnect()
