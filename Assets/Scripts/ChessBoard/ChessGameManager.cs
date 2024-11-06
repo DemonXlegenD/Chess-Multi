@@ -131,8 +131,9 @@ public partial class ChessGameManager : MonoBehaviour
     private bool needToUpdatePieces = false;
     private bool isEndGame = false;
     private bool needResetGame = false;
+    private MainMenu mainMenu = null;
     private PanelInGame panelInGame = null;
-
+    private PanelEndGame panelEndGame = null;
 
     #region Chess Game Methods
 
@@ -164,6 +165,15 @@ public partial class ChessGameManager : MonoBehaviour
 
     private void UpdateEndGame()
     {
+        mainMenu.ShowEndGame();
+        if (teamTurn == EChessTeam.White)
+        {
+            panelEndGame.AddWinner(whiteClientId.ToString());
+        }
+        else
+        {
+            panelEndGame.AddWinner(blackClientId.ToString());
+        }
         isEndGame = false;
         // increase score and reset board
         scores[(int)teamTurn]++;
@@ -180,6 +190,8 @@ public partial class ChessGameManager : MonoBehaviour
         // remove extra piece instances if pawn promotions occured
         teamPiecesArray[0].ClearPromotedPieces();
         teamPiecesArray[1].ClearPromotedPieces();
+
+        mainMenu.ShowInGame();
     }
 
     public void PrepareGame(bool resetScore = true)
@@ -318,7 +330,7 @@ public partial class ChessGameManager : MonoBehaviour
         currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
     }
 
-    private void AskToEnd()
+    public void AskToEnd()
     {
         Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
 
@@ -329,7 +341,7 @@ public partial class ChessGameManager : MonoBehaviour
         currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
     }
 
-    private void AskToReset()
+    public void AskToReset()
     {
         Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
 
@@ -350,7 +362,9 @@ public partial class ChessGameManager : MonoBehaviour
 
     void Start()
     {
-        if(panelInGame == null) panelInGame = FindAnyObjectByType<PanelInGame>();
+        if (mainMenu == null) mainMenu = FindAnyObjectByType<MainMenu>();
+        if (panelInGame == null) panelInGame = FindAnyObjectByType<PanelInGame>();
+        if (panelEndGame == null) panelEndGame = FindAnyObjectByType<PanelEndGame>();
 
         OnPlayerTurn += panelInGame.WhiteMove;
 
@@ -374,6 +388,8 @@ public partial class ChessGameManager : MonoBehaviour
         teamPiecesArray[1] = null;
 
         CreatePieces();
+
+        OnScoreUpdated += GUIManager.Instance.UpdateScore;
 
         if (OnPlayerTurn != null)
             OnPlayerTurn(teamTurn == EChessTeam.White);

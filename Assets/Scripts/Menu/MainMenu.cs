@@ -6,6 +6,7 @@ public class MainMenu : MonoBehaviour
 {
     [SerializeField] RectTransform MainMenuStart;
     [SerializeField] RectTransform MainMenuJoinRoom;
+    [SerializeField] RectTransform MainMenuEndGame;
     [SerializeField] RectTransform MainMenuWaitForConnection;
     [SerializeField] RectTransform MainMenuConnectionFail;
     [SerializeField] RectTransform MainMenuRoom;
@@ -40,6 +41,7 @@ public class MainMenu : MonoBehaviour
         currentMenu = MainMenuStart;
         currentMenu.localScale = on;
 
+        MainMenuEndGame.localScale = off;
         MainMenuJoinRoom.localScale = off;
         MainMenuWaitForConnection.localScale = off;
         MainMenuConnectionFail.localScale = off;
@@ -106,6 +108,16 @@ public class MainMenu : MonoBehaviour
         currentMenu.localScale = off;
         currentMenu = menuToDisplay;
         currentMenu.localScale = on;
+    }
+
+    public void ShowEndGame()
+    {
+        ChangeMenu(MainMenuEndGame);
+    }
+
+    public void ShowInGame()
+    {
+        ChangeMenu(InGamePanel);
     }
 
     public void BackToMenuBecauseDoNotWantToJoinRoom()

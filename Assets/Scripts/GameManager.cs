@@ -61,7 +61,12 @@ public class GameManager : MonoBehaviour
         wantToInstantiate = true;
     }
 
-    public void OnEndGame()
+    public void OnResetGame()
+    {
+        chessGameManager.AskToReset();
+    }
+
+    public void OnLeaveGame()
     {
         Destroy(chessGameManager);
     }
