@@ -137,7 +137,7 @@ public class MainMenu : MonoBehaviour
     public void CreateRoom()
     {
         server = Instantiate(ServerPrefab);
-        Invoke("HostConnection", 0.5f);
+        Invoke("HostConnection", 0.1f);
     }
 
     public void JoinRoom()
@@ -236,11 +236,11 @@ public class MainMenu : MonoBehaviour
 
     public void SucceedToConnect()
     {
-        Invoke("UpdateIP", 1);
+        Invoke("UpdateIP", 0.1f);
         teamHandler.ResetTeams();
         ChangeMenu(MainMenuRoom);
         Chat.localScale = on;
-        Invoke("AskRoomInfo", 1);
+        Invoke("AskRoomInfo", 0.1f);
     }
 
     #endregion
