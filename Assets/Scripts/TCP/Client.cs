@@ -36,7 +36,10 @@ public class Client : MonoBehaviour
 
     private void Update()
     {
-        Debug.LogWarning("Id : " + id);
+        if(id == Guid.Empty)
+        {
+            SendPackageId();
+        }
     }
     private void OnDestroy()
     {
@@ -201,7 +204,7 @@ public class Client : MonoBehaviour
         }
         catch
         {
-            Debug.Log("ID");
+            Debug.LogWarning("Fail Process Data");
         }
     }
 
