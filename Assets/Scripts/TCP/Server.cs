@@ -128,7 +128,7 @@ public class Server : MonoBehaviour
 
                     clients.Add(clientId, clientInfo); // Add it to the client list
 
-                    SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}")); // Tell everyone that a new client logged in
+//SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}")); // Tell everyone that a new client logged in
 
                     Thread clientThread = new Thread(() => HandleClient(clientInfo)); // Start the thread that listen for this client msg
                     clientThread.Start();
@@ -228,7 +228,9 @@ public class Server : MonoBehaviour
 
         if (clients[_clientId].pseudo == string.Empty)
         {
-            clients[_clientId].pseudo = package.Header.Pseudo;
+            ClientInfo clientInfo = clients[_clientId];
+            clientInfo.pseudo = package.Header.Pseudo;
+            SendDataToAllClients(ServerAction.Log($"Client {(clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id)} connected at {clientInfo.ConnectionTimestamp}")); // Tell everyone that a new client logged in
         }
 
         switch (package.Header.SendMethod)

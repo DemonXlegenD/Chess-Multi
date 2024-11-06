@@ -203,7 +203,8 @@ public class MainMenu : MonoBehaviour
         Data.SetData(DataKey.PLAYER_NICKNAME, NickName.text);
         client = Instantiate(ClientPrefab);
         client.SetClientIP(_ip);
-        client.Pseudo = NickName.text;
+        string name = NickName.text == string.Empty ? "Player" : NickName.text;
+        client.Pseudo = name;
 
         bool connectionSuccess = client.ConnectToServer();
 
