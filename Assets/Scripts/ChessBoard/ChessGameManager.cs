@@ -446,6 +446,7 @@ public partial class ChessGameManager : MonoBehaviour
             if (needResetGame)
             {
                 UpdateResetGame();
+                UpdatePieces();
             }
         }
 
