@@ -65,7 +65,7 @@ public class Server : MonoBehaviour
     {
         isServerRunning = false;
 
-        //SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
+        SendDataToAllClients(ServerAction.Log($"Server is shutting down"));
         SendDataToAllClients(ServerAction.DoAction(DataKey.ACTION_LEAVE_ROOM));
 
         Data.ClearData(DataKey.SERVER);
@@ -105,8 +105,7 @@ public class Server : MonoBehaviour
             server = new TcpListener(localAddr, serverPort);
             server.Start();
 
-            Name = $"Server-{Id}-{IpV4}-{serverPort}";
-            Debug.Log("Server started : " + Name);
+            Name = $"Server";
 
             isServerRunning = true;
 
@@ -121,6 +120,7 @@ public class Server : MonoBehaviour
                     var clientInfo = new ClientInfo
                     {
                         Id = clientId,
+                        pseudo = string.Empty,
                         TcpClient = client,
                         Stream = client.GetStream(),
                         ConnectionTimestamp = System.DateTime.Now.ToString()
@@ -181,23 +181,23 @@ public class Server : MonoBehaviour
                 }
                 catch (IOException e)
                 {
-                    Debug.Log("Client " + clientInfo.Id + " disconnected (IOException): " + e.Message);
+                    Debug.Log("Client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + " disconnected (IOException): " + e.Message);
                     break;
                 }
                 catch (ObjectDisposedException)
                 {
-                    Debug.Log("Client " + clientInfo.Id + " disconnected: Stream closed.");
+                    Debug.Log("Client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + " disconnected: Stream closed.");
                     break;
                 }
 
                 if (bytesRead == 0) // 0 bytes read means the client has disconnected
                 {
-                    Debug.Log("Client " + clientInfo.Id + " disconnected (0 bytes read).");
+                    Debug.Log("Client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + " disconnected (0 bytes read).");
                     break;
                 }
 
                 data = Encoding.UTF8.GetString(buffer, 0, bytesRead).TrimEnd('\0');
-                Debug.Log("SERVER : Received from client " + clientInfo.Id + ": " + data);
+                Debug.Log("SERVER : Received from client " + (clientInfo.pseudo != string.Empty ? clientInfo.pseudo : clientInfo.Id) + ": " + data);
 
                 DataProcessing(buffer, clientInfo.Id);
             }
@@ -225,6 +225,11 @@ public class Server : MonoBehaviour
     public void DataProcessing(byte[] _data, Guid _clientId)
     {
         Package package = DataSerialize.DeserializeFromBytes<Package>(_data);
+
+        if (clients[_clientId].pseudo == string.Empty)
+        {
+            clients[_clientId].pseudo = package.Header.Pseudo;
+        }
 
         switch (package.Header.SendMethod)
         {
@@ -432,6 +437,8 @@ public class SimpleAction : Data
 public class ClientInfo
 {
     public Guid Id { get; set; }
+
+    public string pseudo { get; set; }
     public TcpClient TcpClient { get; set; }
     public NetworkStream Stream { get; set; }
     public string ConnectionTimestamp { get; set; }
