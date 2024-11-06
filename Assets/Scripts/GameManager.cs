@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
         }
     }
     #endregion
-
+    [SerializeField] private MainMenu menu;
     [SerializeField] private Transform WhiteCamera;
     [SerializeField] private Transform BlackCamera;
     [SerializeField] private BlackBoard blackBoard;
@@ -88,5 +88,6 @@ public class GameManager : MonoBehaviour
     public void OnLeaveGame()
     {
         if(chessGameManager) Destroy(chessGameManager.gameObject);
+        if (menu) menu.LeaveRoom();
     }
 }
