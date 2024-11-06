@@ -21,6 +21,8 @@ public class GUIManager : MonoBehaviour
     }
     #endregion
 
+    [SerializeField] private RectTransform InGamePanel;
+
     Transform whiteToMoveTr = null;
     Transform blackToMoveTr = null;
     Text whiteScoreText = null;
@@ -29,17 +31,9 @@ public class GUIManager : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
-        whiteToMoveTr = transform.Find("WhiteTurnText");
-        blackToMoveTr = transform.Find("BlackTurnText");
-
-        whiteToMoveTr.gameObject.SetActive(false);
-        blackToMoveTr.gameObject.SetActive(false);
-
-        whiteScoreText = transform.Find("WhiteScoreText").GetComponent<Text>();
-        blackScoreText = transform.Find("BlackScoreText").GetComponent<Text>();
-
-        ChessGameManager.Instance.OnPlayerTurn += DisplayTurn;
-        ChessGameManager.Instance.OnScoreUpdated += UpdateScore;
+        Application.runInBackground = true;
+        whiteScoreText = InGamePanel.Find("WhiteScoreText").GetComponent<Text>();
+        blackScoreText = InGamePanel.Find("BlackScoreText").GetComponent<Text>();
     }
 	
     void DisplayTurn(bool isWhiteMove)
@@ -48,7 +42,7 @@ public class GUIManager : MonoBehaviour
         blackToMoveTr.gameObject.SetActive(!isWhiteMove);
     }
 
-    void UpdateScore(uint whiteScore, uint blackScore)
+    public void UpdateScore(uint whiteScore, uint blackScore)
     {
         whiteScoreText.text = string.Format("White : {0}", whiteScore);
         blackScoreText.text = string.Format("Black : {0}", blackScore);

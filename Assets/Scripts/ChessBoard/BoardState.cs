@@ -433,6 +433,14 @@ public partial class ChessGameManager
             SetPieceAtSquare(startIndex + 6, EChessTeam.Black, EPieceType.Knight);
             SetPieceAtSquare(startIndex + 7, EChessTeam.Black, EPieceType.Rook);
         }
+
+        public void ClearPieces()
+        {
+            for (int i = 0; i < squares.Count; ++i)
+            {
+                BoardSquare.Empty();
+            }
+        }
     }
 }
 
