@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -27,10 +28,17 @@ public class DataSerialize
     {
         using (var memoryStream = new MemoryStream(data))
         {
-            var formatter = new BinaryFormatter();
-            object formatData = formatter.Deserialize(memoryStream);
-            if(formatData is T typeData)
-            return typeData;
+            try
+            {
+                var formatter = new BinaryFormatter();
+                object formatData = formatter.Deserialize(memoryStream);
+                T result = (T)formatData;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         return default;
     }
