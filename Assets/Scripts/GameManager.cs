@@ -87,6 +87,6 @@ public class GameManager : MonoBehaviour
 
     public void OnLeaveGame()
     {
-        Destroy(chessGameManager);
+        Destroy(chessGameManager.gameObject);
     }
 }

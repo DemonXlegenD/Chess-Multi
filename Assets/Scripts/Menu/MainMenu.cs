@@ -156,7 +156,7 @@ public class MainMenu : MonoBehaviour
         Data.GetValue<GameManager>(DataKey.GAME_MANAGER).OnLeaveGame();
         Destroy(client.gameObject);
 
-        ChangeMenu(toChangePanel);
+        ChangeMenu(MainMenuStart);
         Chat.localScale = off;
     }
 
