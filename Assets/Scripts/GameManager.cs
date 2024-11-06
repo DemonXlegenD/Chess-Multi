@@ -71,6 +71,7 @@ public class GameManager : MonoBehaviour
 
     public void AskForLeaving()
     {
+        Debug.Log("Ask for leaving");
         needToLeave = true;
     }
 
