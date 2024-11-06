@@ -128,7 +128,9 @@ public partial class ChessGameManager : MonoBehaviour
     private Guid blackClientId = Guid.Empty;
     private Guid whiteClientId = Guid.Empty;
 
-    [SerializeField] private bool needToUpdatePieces = false;
+    private bool needToUpdatePieces = false;
+    private bool isEndGame = false;
+    private bool needResetGame = false;
     private PanelInGame panelInGame = null;
 
 
@@ -150,6 +152,35 @@ public partial class ChessGameManager : MonoBehaviour
     public event ScoreUpdateEvent OnScoreUpdated = null;
 
 
+    public void ResetGame()
+    {
+        needResetGame = true;
+    }
+
+    public void EndGame()
+    {
+        isEndGame = true;
+    }
+
+    private void UpdateEndGame()
+    {
+        isEndGame = false;
+        // increase score and reset board
+        scores[(int)teamTurn]++;
+        if (OnScoreUpdated != null)
+            OnScoreUpdated(scores[0], scores[1]);
+
+    }
+
+    private void UpdateResetGame()
+    {
+
+        needResetGame = false;
+        PrepareGame(false);
+        // remove extra piece instances if pawn promotions occured
+        teamPiecesArray[0].ClearPromotedPieces();
+        teamPiecesArray[1].ClearPromotedPieces();
+    }
 
     public void PrepareGame(bool resetScore = true)
     {
@@ -183,20 +214,13 @@ public partial class ChessGameManager : MonoBehaviour
         }
     }
 
+
     private void UpdateTeams()
     {
         EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
         if (boardState.DoesTeamLose(otherTeam))
         {
-            // increase score and reset board
-            scores[(int)teamTurn]++;
-            if (OnScoreUpdated != null)
-                OnScoreUpdated(scores[0], scores[1]);
-
-            PrepareGame(false);
-            // remove extra piece instances if pawn promotions occured
-            teamPiecesArray[0].ClearPromotedPieces();
-            teamPiecesArray[1].ClearPromotedPieces();
+            AskToEnd();
         }
         else
         {
@@ -294,6 +318,28 @@ public partial class ChessGameManager : MonoBehaviour
         currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
     }
 
+    private void AskToEnd()
+    {
+        Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+
+        SimpleAction end_game = new SimpleAction(DataKey.ACTION_END_GAME);
+
+        Package package = Package.CreatePackage(header, end_game);
+
+        currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
+
+    private void AskToReset()
+    {
+        Header header = new Header(currentClient.Id, currentClient.Pseudo, DateTime.Now, SendMethod.ALL_CLIENTS);
+
+        SimpleAction reset_game = new SimpleAction(DataKey.ACTION_RESET_GAME);
+
+        Package package = Package.CreatePackage(header, reset_game);
+
+        currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
+    }
+
     #endregion
 
     #region MonoBehaviour
@@ -375,6 +421,16 @@ public partial class ChessGameManager : MonoBehaviour
                 needToUpdatePieces = false;
 
             }
+
+            if (isEndGame)
+            {
+                UpdateEndGame();
+            }
+
+            if (needResetGame)
+            {
+                UpdateResetGame();
+            }
         }
 
     }
@@ -392,6 +448,8 @@ public partial class ChessGameManager : MonoBehaviour
     {
         ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
         ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_END_GAME, EndGame);
+        ActionBlackBoard.AddData<Action>(DataKey.ACTION_RESET_GAME, ResetGame);
     }
 
     private void GetData()
@@ -403,6 +461,8 @@ public partial class ChessGameManager : MonoBehaviour
     {
         ActionBlackBoard.ClearData(DataKey.ACTION_CHESS_GAME_INFO);
         ActionBlackBoard.ClearData(DataKey.ACTION_PLAY_MOVE);
+        ActionBlackBoard.ClearData(DataKey.ACTION_END_GAME);
+        ActionBlackBoard.ClearData(DataKey.ACTION_RESET_GAME);
     }
 
     #endregion
