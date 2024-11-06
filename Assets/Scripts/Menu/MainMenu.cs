@@ -153,7 +153,7 @@ public class MainMenu : MonoBehaviour
             server.StopServer();
             Destroy(server.gameObject);
         }
-        Data.GetValue<GameManager>(DataKey.GAME_MANAGER).OnLeaveGame();
+        
         Destroy(client.gameObject);
 
         ChangeMenu(MainMenuStart);
