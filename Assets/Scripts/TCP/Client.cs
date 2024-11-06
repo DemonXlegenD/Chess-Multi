@@ -33,6 +33,11 @@ public class Client : MonoBehaviour
     {
         CreateData();
     }
+
+    private void Update()
+    {
+        Debug.LogWarning("Id : " + id);
+    }
     private void OnDestroy()
     {
         ClearData();
