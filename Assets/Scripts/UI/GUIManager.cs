@@ -31,6 +31,7 @@ public class GUIManager : MonoBehaviour
     // Use this for initialization
     void Awake()
     {
+        Application.runInBackground = true;
         whiteScoreText = InGamePanel.Find("WhiteScoreText").GetComponent<Text>();
         blackScoreText = InGamePanel.Find("BlackScoreText").GetComponent<Text>();
     }
