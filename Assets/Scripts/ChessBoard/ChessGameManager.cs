@@ -234,7 +234,10 @@ public partial class ChessGameManager : MonoBehaviour
         EChessTeam otherTeam = (teamTurn == EChessTeam.White) ? EChessTeam.Black : EChessTeam.White;
         if (boardState.DoesTeamLose(otherTeam))
         {
-            AskToEnd();
+            if (blackBoard.GetValue<bool>(DataKey.IS_HOST)) 
+            {
+                AskToEnd();
+            }
         }
         else
         {
