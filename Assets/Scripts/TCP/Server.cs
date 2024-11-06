@@ -297,6 +297,7 @@ public class Server : MonoBehaviour
                     WhitePlayerID = _clientId;
                     team_request.PlayerID = WhitePlayerID;
                     WhitePlayerNickname = _package.Header.Pseudo;
+                    _data = DataSerialize.SerializeToBytes(_package);
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
@@ -304,6 +305,7 @@ public class Server : MonoBehaviour
                     BlackPlayerID = _clientId;
                     team_request.PlayerID = BlackPlayerID;
                     BlackPlayerNickname = _package.Header.Pseudo;
+                    _data = DataSerialize.SerializeToBytes(_package);
                     SendDataToAllClients(_data);
                 }
             }
@@ -314,6 +316,7 @@ public class Server : MonoBehaviour
                     WhitePlayerID = Guid.Empty;
                     WhitePlayerNickname = "";
                     team_request.PlayerID = WhitePlayerID;
+                    _data = DataSerialize.SerializeToBytes(_package);
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
@@ -321,6 +324,7 @@ public class Server : MonoBehaviour
                     BlackPlayerID = Guid.Empty;
                     BlackPlayerNickname = "";
                     team_request.PlayerID = BlackPlayerID;
+                    _data = DataSerialize.SerializeToBytes(_package);
                     SendDataToAllClients(_data);
                 }
             }

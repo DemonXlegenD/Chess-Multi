@@ -85,7 +85,7 @@ public class TeamHandler : MonoBehaviour
         Teams _team = _TeamRequestResult.Team;
         JoinOrLeave _joinOrLeave = _TeamRequestResult.JoinOrLeave;
 
-        Debug.Log(_pseudo + " " + _team + " " + _joinOrLeave);
+        Debug.Log(_playerID + " " + _pseudo + " " + _team + " " + _joinOrLeave);
 
         if (_joinOrLeave == JoinOrLeave.JOIN) 
         {
