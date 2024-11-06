@@ -2,6 +2,10 @@ using System;
 using System.Runtime.Serialization;
 using UnityEngine;
 
+/*
+ * This class handle every change in the UI
+ */
+
 public class MainMenu : MonoBehaviour
 {
     [SerializeField] RectTransform MainMenuStart;

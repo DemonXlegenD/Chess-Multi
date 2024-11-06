@@ -8,7 +8,19 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-
+/*
+ * This class handle every TCP server's request : client's connection, sending and receiving data etc 
+ * - StartServer() to start it
+ * - StopServer() to stop it
+ * - SetupServer() to get the IP and start listening for clients connections
+ * - GetLocalIPAddress() to get ip adress
+ * - HandleClient(ClientInfo clientInfo) to handle each clients in his own thread
+ * - DataProcessing(byte[] _data, Guid _clientId) to process the receiving data
+ * - HandleTeamRequest(Package _package, TeamRequest team_request, Guid _clientId, byte[] _data) to handle when clients ask to join team
+ * - SendMessageToClient(Guid clientId, string message) to send message 
+ * - SendDataToAllClients(byte[] _data) to send a package to everyone 
+ */
+ 
 public class Server : MonoBehaviour
 {
     [SerializeField] private Chat chat;

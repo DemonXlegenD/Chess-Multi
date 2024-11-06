@@ -6,7 +6,15 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-
+/*
+ * This class handle every TCP client's request : connection, sending and receiving data etc 
+ * - CreateData() to add himself to the blackboard 
+ * - ConnectToServer() to connect
+ * - SendMessageToServer(string message) to send a message
+ * - SendDataToServer(byte[] data) to send data
+ * - SendPackageId() to send a specific package to ask the server what is our ID
+ */
+ 
 public class Client : MonoBehaviour
 {
     private string IpServer = string.Empty;
