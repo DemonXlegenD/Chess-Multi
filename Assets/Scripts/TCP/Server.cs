@@ -295,12 +295,14 @@ public class Server : MonoBehaviour
                 if (team_request.RequestTeam == Teams.TEAM_WHITE && WhitePlayerID == Guid.Empty && BlackPlayerID != _clientId)
                 {
                     WhitePlayerID = _clientId;
+                    team_request.PlayerID = WhitePlayerID;
                     WhitePlayerNickname = _package.Header.Pseudo;
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == Guid.Empty && WhitePlayerID != _clientId)
                 {
                     BlackPlayerID = _clientId;
+                    team_request.PlayerID = BlackPlayerID;
                     BlackPlayerNickname = _package.Header.Pseudo;
                     SendDataToAllClients(_data);
                 }
@@ -311,12 +313,14 @@ public class Server : MonoBehaviour
                 {
                     WhitePlayerID = Guid.Empty;
                     WhitePlayerNickname = "";
+                    team_request.PlayerID = WhitePlayerID;
                     SendDataToAllClients(_data);
                 }
                 else if (team_request.RequestTeam == Teams.TEAM_BLACK && BlackPlayerID == _clientId)
                 {
                     BlackPlayerID = Guid.Empty;
                     BlackPlayerNickname = "";
+                    team_request.PlayerID = BlackPlayerID;
                     SendDataToAllClients(_data);
                 }
             }

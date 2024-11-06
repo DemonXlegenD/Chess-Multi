@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        Application.runInBackground = true;
         blackBoard.AddData<GameManager>(DataKey.GAME_MANAGER, Instance);
     }
 

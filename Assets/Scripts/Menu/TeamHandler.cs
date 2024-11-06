@@ -33,7 +33,6 @@ public class TeamHandler : MonoBehaviour
         if (shouldUpdate) 
         {
             UpdateText();
-            //UpdateTeams();
             shouldUpdate = false;
         }
 
@@ -82,6 +81,7 @@ public class TeamHandler : MonoBehaviour
     public void TeamRequestServerAnswer(TeamRequestResult _TeamRequestResult)
     {
         string _pseudo = _TeamRequestResult.Pseudo;
+        Guid _playerID = _TeamRequestResult.PlayerID;
         Teams _team = _TeamRequestResult.Team;
         JoinOrLeave _joinOrLeave = _TeamRequestResult.JoinOrLeave;
 
@@ -91,9 +91,11 @@ public class TeamHandler : MonoBehaviour
         {
             if (_team == Teams.TEAM_WHITE) 
             {
+                WhiteTeamPlayerID = _playerID;
                 JoinWhite(_pseudo);   
             } else if (_team == Teams.TEAM_BLACK) 
             {
+                BlackTeamPlayerID = _playerID;
                 JoinBlack(_pseudo);
             }
         }
@@ -101,12 +103,16 @@ public class TeamHandler : MonoBehaviour
         {
             if (_team == Teams.TEAM_WHITE) 
             {
+                WhiteTeamPlayerID = _playerID;
                 LeaveWhite(_pseudo);
             } else if (_team == Teams.TEAM_BLACK) 
             {
+                BlackTeamPlayerID = _playerID;
                 LeaveBlack(_pseudo);
             }
         }
+
+        UpdateTeams();
     }
 
     #endregion
@@ -117,7 +123,7 @@ public class TeamHandler : MonoBehaviour
     {
         WhiteTeamPlayerID = white_player_id;
         BlackTeamPlayerID = black_player_id;
-        shouldUpdate = true;
+        UpdateTeams();
     }
 
     private void AskTeamInfo()
@@ -141,7 +147,7 @@ public class TeamHandler : MonoBehaviour
         {
             Header header = new Header(client.Id, client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
-            TeamRequest team_request = new TeamRequest(Teams.TEAM_WHITE, JoinOrLeave.JOIN, DataKey.ACTION_TEAM_REQUEST);
+            TeamRequest team_request = new TeamRequest(Guid.Empty, Teams.TEAM_WHITE, JoinOrLeave.JOIN, DataKey.ACTION_TEAM_REQUEST);
 
             Package package = new Package(header, team_request);
 
@@ -156,7 +162,7 @@ public class TeamHandler : MonoBehaviour
         {
             Header header = new Header(client.Id, client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
-            TeamRequest team_request = new TeamRequest(Teams.TEAM_BLACK, JoinOrLeave.JOIN, DataKey.ACTION_TEAM_REQUEST);
+            TeamRequest team_request = new TeamRequest(Guid.Empty, Teams.TEAM_BLACK, JoinOrLeave.JOIN, DataKey.ACTION_TEAM_REQUEST);
 
             Package package = new Package(header, team_request);
 
@@ -171,7 +177,7 @@ public class TeamHandler : MonoBehaviour
         {
             Header header = new Header(client.Id, client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
-            TeamRequest team_request = new TeamRequest(Teams.TEAM_WHITE, JoinOrLeave.LEAVE, DataKey.ACTION_TEAM_REQUEST);
+            TeamRequest team_request = new TeamRequest(Guid.Empty, Teams.TEAM_WHITE, JoinOrLeave.LEAVE, DataKey.ACTION_TEAM_REQUEST);
 
             Package package = new Package(header, team_request);
 
@@ -186,7 +192,7 @@ public class TeamHandler : MonoBehaviour
         {
             Header header = new Header(client.Id, client.Pseudo, DateTime.Now, SendMethod.ONLY_SERVER);
 
-            TeamRequest team_request = new TeamRequest(Teams.TEAM_BLACK, JoinOrLeave.LEAVE, DataKey.ACTION_TEAM_REQUEST);
+            TeamRequest team_request = new TeamRequest(Guid.Empty, Teams.TEAM_BLACK, JoinOrLeave.LEAVE, DataKey.ACTION_TEAM_REQUEST);
 
             Package package = new Package(header, team_request);
 
@@ -202,7 +208,6 @@ public class TeamHandler : MonoBehaviour
     {
         LeaveSpectator(playerName);
         whitePlayer = playerName;
-        //AskTeamInfo();
         shouldUpdate = true;
     }
 
@@ -210,7 +215,6 @@ public class TeamHandler : MonoBehaviour
     {
         LeaveSpectator(playerName);
         blackPlayer = playerName; 
-        //AskTeamInfo();
         shouldUpdate = true;
     }
 
@@ -218,7 +222,6 @@ public class TeamHandler : MonoBehaviour
     {
         whitePlayer = "";
         JoinSpectator(playerName);
-        //AskTeamInfo();
         shouldUpdate = true;
     }
 
@@ -226,7 +229,6 @@ public class TeamHandler : MonoBehaviour
     {
         blackPlayer = "";
         JoinSpectator(playerName);
-        //AskTeamInfo();
         shouldUpdate = true;
     }
 
@@ -248,25 +250,29 @@ public class TeamHandler : MonoBehaviour
     {
         if (Data.GetValue<Client>(DataKey.CLIENT) != null) 
         {
-            Debug.Log("EXISTE");
             if (WhiteTeamPlayerID == Data.GetValue<Client>(DataKey.CLIENT).Id)
             {
+                Debug.Log("IS WHITE ut");
                 Data.SetData(DataKey.IS_WHITE, true);
                 Data.SetData(DataKey.IS_SPECTATOR, false);
                 Data.SetData(DataKey.IS_BLACK, false);
             } else if (BlackTeamPlayerID == Data.GetValue<Client>(DataKey.CLIENT).Id)
             {
-                Debug.Log("IS BLACK");
+                Debug.Log("IS BLACK ut");
                 Data.SetData(DataKey.IS_BLACK, true);
                 Data.SetData(DataKey.IS_SPECTATOR, false);
                 Data.SetData(DataKey.IS_WHITE, false);
             } else {
+                Debug.Log("===");
+                Debug.Log(Data.GetValue<Client>(DataKey.CLIENT).Id);
+                Debug.Log(WhiteTeamPlayerID);
+                Debug.Log(BlackTeamPlayerID);
+                Debug.Log("===");
                 Data.SetData(DataKey.IS_WHITE, false);
                 Data.SetData(DataKey.IS_BLACK, false);
                 Data.SetData(DataKey.IS_SPECTATOR, true);
             }
         }
-        Debug.Log("EXISTE PAS");
     }
     private void UpdateText()
     {
@@ -299,36 +305,40 @@ public class TeamHandler : MonoBehaviour
 [Serializable]
 public class TeamRequest : Data
 {
+    public Guid PlayerID;
     public Teams RequestTeam;
     public JoinOrLeave RequestJoinOrLeave;
 
-    public TeamRequest(Teams _team, JoinOrLeave _joinOrLeave, DataKey _actionDataKey) : base(_actionDataKey)
-    {
+    public TeamRequest(Guid _playerID, Teams _team, JoinOrLeave _joinOrLeave, DataKey _actionDataKey) : base(_actionDataKey)
+    {   
+        this.PlayerID = _playerID;
         this.RequestTeam = _team;
         this.RequestJoinOrLeave = _joinOrLeave;
     }
 
     public TeamRequest(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
     {
+        this.PlayerID = (Guid)_info.GetValue("PlayerID", typeof(Guid));
         this.RequestTeam = (Teams)_info.GetValue("RequestTeam", typeof(Teams));
         this.RequestJoinOrLeave = (JoinOrLeave)_info.GetValue("RequestJoinOrLeave", typeof(JoinOrLeave));
     }
 
-    public TeamRequestResult TeamRequestProcess(string _pseudo, Teams _team, JoinOrLeave _joinOrLeave)
+    public TeamRequestResult TeamRequestProcess(string _pseudo, Guid _playerID, Teams _team, JoinOrLeave _joinOrLeave)
     {
-        return new TeamRequestResult(_pseudo, _team, _joinOrLeave);
+        return new TeamRequestResult(_pseudo, _playerID, _team, _joinOrLeave);
     }
 
     public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
     {
         base.GetObjectData(_info, _ctxt);
+        _info.AddValue("PlayerID", PlayerID);
         _info.AddValue("RequestTeam", RequestTeam);
         _info.AddValue("RequestJoinOrLeave", RequestJoinOrLeave);
     }
 
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
-        _actionBlackBoard.GetValue<Action<TeamRequestResult>>(ActionDataKey)?.Invoke(TeamRequestProcess(_dataPseudo.Pseudo, RequestTeam, RequestJoinOrLeave));
+        _actionBlackBoard.GetValue<Action<TeamRequestResult>>(ActionDataKey)?.Invoke(TeamRequestProcess(_dataPseudo.Pseudo, PlayerID, RequestTeam, RequestJoinOrLeave));
     }
 }
 
@@ -349,12 +359,14 @@ public enum JoinOrLeave
 public struct TeamRequestResult
 {
     public string Pseudo { get; }
+    public Guid PlayerID { get; }
     public Teams Team { get; }
     public JoinOrLeave JoinOrLeave { get; }
 
-    public TeamRequestResult(string pseudo, Teams team, JoinOrLeave joinOrLeave)
+    public TeamRequestResult(string pseudo, Guid playerID, Teams team, JoinOrLeave joinOrLeave)
     {
         Pseudo = pseudo;
+        PlayerID = playerID;
         Team = team;
         JoinOrLeave = joinOrLeave;
     }
