@@ -405,6 +405,7 @@ public partial class ChessGameManager : MonoBehaviour
     {
         if (IsGameInfoReady())
         {
+            Debug.LogWarning("CurrentId : " + currentClient.Id);
             if (teamTurn == EChessTeam.White)
             {
                 if (currentClient.Id == whiteClientId)
