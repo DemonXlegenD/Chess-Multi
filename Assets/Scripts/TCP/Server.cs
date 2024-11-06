@@ -234,25 +234,31 @@ public class Server : MonoBehaviour
                 Debug.Log("Opponent");
                 break;
             case SendMethod.ONLY_CLIENT:
+                Package new_package = new Package();
                 if (package.Data is IdRequest id_request)
                 {
-                    Debug.Log(_clientId);
                     Header header = package.Header;
                     header.Id = _clientId;
                     package.Header = header;
                     id_request.Id = _clientId;
+                    Debug.LogWarning("Debug ID : " + id_request.Id);
+                    new_package = Package.CreatePackage(header, id_request);
                 }
-
-                if (package.Data is ChessInfoGameData chess_info_game_data)
+                else if (package.Data is ChessInfoGameData chess_info_game_data)
                 {
+
                     chess_info_game_data.BlackPlayerId = BlackPlayerID;
                     chess_info_game_data.WhitePlayerId = WhitePlayerID;
                     chess_info_game_data.WhitePlayerPseudo = WhitePlayerNickname;
                     chess_info_game_data.BlackPlayerPseudo = BlackPlayerNickname;
+                    new_package = Package.CreatePackage(package.Header, chess_info_game_data);
+                }
+                else
+                {
+                    new_package = package;  
                 }
 
-                _data = DataSerialize.SerializeToBytes(package);
-                SendDataToClient(_clientId, _data);
+                SendDataToClient(_clientId, DataSerialize.SerializeToBytes(new_package));
                 Debug.Log("Only client");
                 break;
             case SendMethod.ALL_CLIENTS:
