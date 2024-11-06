@@ -245,6 +245,8 @@ public class Server : MonoBehaviour
                 {
                     chess_info_game_data.BlackPlayerId = BlackPlayerID;
                     chess_info_game_data.WhitePlayerId = WhitePlayerID;
+                    chess_info_game_data.WhitePlayerPseudo = WhitePlayerNickname;
+                    chess_info_game_data.BlackPlayerPseudo = BlackPlayerNickname;
                 }
 
                 _data = DataSerialize.SerializeToBytes(package);

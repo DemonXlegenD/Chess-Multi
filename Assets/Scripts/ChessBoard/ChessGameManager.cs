@@ -127,6 +127,8 @@ public partial class ChessGameManager : MonoBehaviour
     private Client currentClient;
     private Guid blackClientId = Guid.Empty;
     private Guid whiteClientId = Guid.Empty;
+    private string whitePseudo = string.Empty;
+    private string blackPseudo = string.Empty;
 
     private bool needToUpdatePieces = false;
     private bool isEndGame = false;
@@ -168,11 +170,11 @@ public partial class ChessGameManager : MonoBehaviour
         mainMenu.ShowEndGame();
         if (teamTurn == EChessTeam.White)
         {
-            panelEndGame.AddWinner(whiteClientId.ToString());
+            panelEndGame.AddWinner(whitePseudo);
         }
         else
         {
-            panelEndGame.AddWinner(blackClientId.ToString());
+            panelEndGame.AddWinner(blackPseudo);
         }
         isEndGame = false;
         // increase score and reset board
@@ -294,7 +296,7 @@ public partial class ChessGameManager : MonoBehaviour
 
     private bool IsGameInfoReady()
     {
-        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty)
+        if (blackClientId != Guid.Empty && whiteClientId != Guid.Empty && blackPseudo != string.Empty && whitePseudo != string.Empty)
         {
             return true;
         }
@@ -311,11 +313,13 @@ public partial class ChessGameManager : MonoBehaviour
         currentClient.SendDataToServer(DataSerialize.SerializeToBytes(package));
     }
 
-    private void SetGameInfo(Guid white_player_id, Guid black_player_id)
+    private void SetGameInfo(Guid white_player_id, Guid black_player_id, string white_player_pseudo, string black_player_pseudo)
     {
         GetData();
         blackClientId = black_player_id;
         whiteClientId = white_player_id;
+        whitePseudo = white_player_pseudo;
+        blackPseudo = black_player_pseudo;    
     }
 
     private void AskToMove(Move move)
@@ -463,7 +467,7 @@ public partial class ChessGameManager : MonoBehaviour
 
     private void CreateData()
     {
-        ActionBlackBoard.AddData<Action<Guid, Guid>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
+        ActionBlackBoard.AddData<Action<Guid, Guid, string, string>>(DataKey.ACTION_CHESS_GAME_INFO, SetGameInfo);
         ActionBlackBoard.AddData<Action<Move>>(DataKey.ACTION_PLAY_MOVE, PlayTurn);
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_END_GAME, EndGame);
         ActionBlackBoard.AddData<Action>(DataKey.ACTION_RESET_GAME, ResetGame);
@@ -668,6 +672,10 @@ public class ChessInfoGameData : Data
 
     public Guid BlackPlayerId = Guid.Empty;
 
+    public string WhitePlayerPseudo = string.Empty;
+
+    public string BlackPlayerPseudo = string.Empty;
+
     public ChessInfoGameData(DataKey _actionDataKey) : base(_actionDataKey)
     {
 
@@ -675,13 +683,15 @@ public class ChessInfoGameData : Data
 
     public override void CallAction(BlackBoard _actionBlackBoard, IPlayerPseudo _dataPseudo, ITimestamp _dataTimestamp)
     {
-        _actionBlackBoard.GetValue<Action<Guid, Guid>>(ActionDataKey)?.Invoke(WhitePlayerId, BlackPlayerId);
+        _actionBlackBoard.GetValue<Action<Guid, Guid, string, string>>(ActionDataKey)?.Invoke(WhitePlayerId, BlackPlayerId, WhitePlayerPseudo, BlackPlayerPseudo);
     }
 
     public ChessInfoGameData(SerializationInfo _info, StreamingContext _ctxt) : base(_info, _ctxt)
     {
         WhitePlayerId = (Guid)_info.GetValue("WhitePlayerId", typeof(Guid));
         BlackPlayerId = (Guid)_info.GetValue("BlackPlayerId", typeof(Guid));
+        WhitePlayerPseudo = (string)_info.GetValue("WhitePlayerPseudo", typeof(string));
+        BlackPlayerPseudo = (string)_info.GetValue("BlackPlayerPseudo", typeof(string));
     }
 
     public override void GetObjectData(SerializationInfo _info, StreamingContext _ctxt)
@@ -690,6 +700,8 @@ public class ChessInfoGameData : Data
 
         _info.AddValue("WhitePlayerId", WhitePlayerId);
         _info.AddValue("BlackPlayerId", BlackPlayerId);
+        _info.AddValue("WhitePlayerPseudo", WhitePlayerPseudo);
+        _info.AddValue("BlackPlayerPseudo", BlackPlayerPseudo);
     }
 }
 
