@@ -139,6 +139,8 @@ public partial class ChessGameManager : MonoBehaviour
 
     EChessTeam teamTurn;
 
+    private int positionQueen = -1;
+
     List<uint> scores;
 
     public delegate void PlayerTurnEvent(bool isWhiteMove);
@@ -146,6 +148,8 @@ public partial class ChessGameManager : MonoBehaviour
 
     public delegate void ScoreUpdateEvent(uint whiteScore, uint blackScore);
     public event ScoreUpdateEvent OnScoreUpdated = null;
+
+
 
     public void PrepareGame(bool resetScore = true)
     {
@@ -176,6 +180,7 @@ public partial class ChessGameManager : MonoBehaviour
         if (result == BoardState.EMoveResult.Promotion)
         {
             // instantiate promoted queen gameobject
+            positionQueen = move.to;
             //AddQueenAtPos(move.to);
         }
 
@@ -362,6 +367,11 @@ public partial class ChessGameManager : MonoBehaviour
                 if (OnPlayerTurn != null)
                     OnPlayerTurn(teamTurn == EChessTeam.White);
                 needToUpdatePieces = false;
+            }
+
+            if(positionQueen != -1) { 
+                AddQueenAtPos(positionQueen);
+                positionQueen = -1;
             }
         }
 
