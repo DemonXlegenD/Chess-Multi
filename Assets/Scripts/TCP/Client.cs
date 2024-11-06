@@ -85,10 +85,7 @@ public class Client : MonoBehaviour
 
     public void StartRunningClient()
     {
-        clientReceiveThread = new Thread(ListenForData)
-        {
-            IsBackground = true
-        };
+        clientReceiveThread = new Thread(ListenForData);
         clientReceiveThread.Start();
     }
 

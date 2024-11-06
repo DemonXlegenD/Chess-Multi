@@ -57,7 +57,6 @@ public class Server : MonoBehaviour
     public void StartServer()
     {
         serverThread = new Thread(SetupServer);
-        serverThread.IsBackground = true;
         serverThread.Start();
     }
 
@@ -132,7 +131,6 @@ public class Server : MonoBehaviour
                     SendDataToAllClients(ServerAction.Log($"Client {clientId} connected at {clientInfo.ConnectionTimestamp}"));
 
                     Thread clientThread = new Thread(() => HandleClient(clientInfo));
-                    clientThread.IsBackground = true;
                     clientThread.Start();
                 }
 
