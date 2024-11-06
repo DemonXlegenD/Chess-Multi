@@ -43,6 +43,7 @@ public class Client : MonoBehaviour
     }
     private void OnDestroy()
     {
+        CloseClient();
         ClearData(); // Clear black board data
     }
 
